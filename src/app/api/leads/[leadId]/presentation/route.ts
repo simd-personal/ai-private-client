@@ -27,7 +27,8 @@ export async function GET(
     const lead = await fetchTenantScopedLead(
       supabase,
       leadId,
-      resolvedTenant.tenantId
+      resolvedTenant.tenantId,
+      "id, tenant_id, ai_presentation_mode"
     );
 
     if (!lead) {

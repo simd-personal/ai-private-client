@@ -23,8 +23,9 @@ import {
   trackMeetingPrepViewed,
 } from "@/lib/analytics";
 import type { AdminStrategyRoomData } from "@/lib/schemas/ai-strategy-room";
-import type { AdminDecisionLayerData, DataRoomItem } from "@/lib/schemas/decision-layer";
+import { calculateDataRoomCompletion } from "@/lib/data-room/calculateDataRoomCompletion";
 import { READINESS_LABEL_DISPLAY } from "@/lib/schemas/ai-strategy-room";
+import type { AdminDecisionLayerData, DataRoomItem } from "@/lib/schemas/decision-layer";
 import type { LeadConcierge } from "@/lib/schemas/lead-concierge";
 
 const TABS = [
@@ -83,10 +84,7 @@ export function AdminAiStrategySection({
       .then((json: { items: DataRoomItem[] }) => setDataRoomItems(json.items));
   }, [hasData, leadId, strategyData.aiGeneratedAt]);
 
-  const dataRoomComplete = dataRoomItems.filter(
-    (i) => i.status === "reviewed" || i.status === "not_needed"
-  ).length;
-  const dataRoomTotal = dataRoomItems.length;
+  const dataRoomMetrics = calculateDataRoomCompletion(dataRoomItems);
   const missingCount =
     strategyData.itemsToClarify?.missingInformation.length ?? 0;
 
@@ -162,8 +160,8 @@ export function AdminAiStrategySection({
         <StatusCard
           label="Data Room"
           value={
-            dataRoomTotal > 0
-              ? `${dataRoomComplete}/${dataRoomTotal} complete`
+            dataRoomMetrics.totalItems > 0
+              ? `${dataRoomMetrics.completionPercent}% · ${dataRoomMetrics.reviewedCount + dataRoomMetrics.notNeededCount}/${dataRoomMetrics.totalItems} reviewed`
               : "—"
           }
         />

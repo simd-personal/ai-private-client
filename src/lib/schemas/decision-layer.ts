@@ -145,6 +145,18 @@ export const DATA_ROOM_STATUSES = [
   "not_needed",
 ] as const;
 
+export const documentSummarySchema = z.object({
+  summaryTitle: z.string(),
+  documentTypeGuess: z.string(),
+  extractedFactsForReview: z.array(z.string()),
+  possiblePlanningTopics: z.array(z.string()),
+  advisorReviewNeeded: z.array(z.string()),
+  missingOrUnclearItems: z.array(z.string()),
+  cautionNote: z.string(),
+});
+
+export type DocumentSummary = z.infer<typeof documentSummarySchema>;
+
 export const dataRoomItemSchema = z.object({
   id: z.string().uuid(),
   tenant_id: z.string().uuid().nullable(),
@@ -163,9 +175,50 @@ export const dataRoomItemSchema = z.object({
   file_mime_type: z.string().nullable(),
   file_size_bytes: z.number().nullable(),
   ai_reason: z.string().nullable(),
+  ai_document_summary: documentSummarySchema.nullable().optional(),
+  ai_document_summary_generated_at: z.string().nullable().optional(),
+  ai_document_summary_source: z.string().nullable().optional(),
+  ai_document_summary_model: z.string().nullable().optional(),
   created_at: z.string(),
   updated_at: z.string(),
 });
+
+export type DataRoomItem = z.infer<typeof dataRoomItemSchema>;
+
+export type PublicDataRoomItem = Omit<
+  DataRoomItem,
+  | "storage_path"
+  | "file_name"
+  | "file_mime_type"
+  | "file_size_bytes"
+  | "ai_document_summary"
+  | "ai_document_summary_generated_at"
+  | "ai_document_summary_source"
+  | "ai_document_summary_model"
+>;
+
+export function toPublicDataRoomItem(item: DataRoomItem): PublicDataRoomItem {
+  const {
+    storage_path: _sp,
+    file_name: _fn,
+    file_mime_type: _mt,
+    file_size_bytes: _fs,
+    ai_document_summary: _ads,
+    ai_document_summary_generated_at: _adsg,
+    ai_document_summary_source: _adss,
+    ai_document_summary_model: _adsm,
+    ...rest
+  } = item;
+  void _sp;
+  void _fn;
+  void _mt;
+  void _fs;
+  void _ads;
+  void _adsg;
+  void _adss;
+  void _adsm;
+  return rest;
+}
 
 export const meetingSummarySchema = z.object({
   summary: z.string(),
@@ -223,7 +276,6 @@ export type PublicDecisionGraph = Omit<
 };
 export type ComplianceGuardrails = z.infer<typeof complianceGuardrailsSchema>;
 export type DataRoomSuggestions = z.infer<typeof dataRoomSuggestionsSchema>;
-export type DataRoomItem = z.infer<typeof dataRoomItemSchema>;
 export type MeetingSummary = z.infer<typeof meetingSummarySchema>;
 export type MeetingNote = z.infer<typeof meetingNoteSchema>;
 export type DecisionVersion = z.infer<typeof decisionVersionSchema>;
@@ -267,14 +319,15 @@ export function toPublicDecisionGraph(
 
 export interface PublicDecisionLayerData {
   decisionGraph: PublicDecisionGraph | null;
-  dataRoomItems: DataRoomItem[];
+  dataRoomItems: PublicDataRoomItem[];
 }
 
 export interface AdminDecisionLayerData extends Omit<
   PublicDecisionLayerData,
-  "decisionGraph"
+  "decisionGraph" | "dataRoomItems"
 > {
   decisionGraph: DecisionGraph | null;
+  dataRoomItems: DataRoomItem[];
   complianceGuardrails: ComplianceGuardrails | null;
   decisionTimelineSummary: DecisionTimelineSummary | null;
   dataRoomSuggestions: DataRoomSuggestions | null;
@@ -287,7 +340,9 @@ export function toPublicDecisionLayerData(lead: {
   const graph = parseDecisionField(decisionGraphSchema, lead.ai_decision_graph);
   return {
     decisionGraph: toPublicDecisionGraph(graph),
-    dataRoomItems: dataRoomItems.filter((i) => i.visibility === "public"),
+    dataRoomItems: dataRoomItems
+      .filter((i) => i.visibility === "public")
+      .map(toPublicDataRoomItem),
   };
 }
 

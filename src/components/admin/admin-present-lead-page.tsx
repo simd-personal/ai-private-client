@@ -7,7 +7,7 @@ import { AdminAuthGate } from "@/components/admin/admin-auth-gate";
 import { adminFetch } from "@/lib/admin/admin-fetch";
 import type { PresentationMode } from "@/lib/schemas/ai-strategy-room";
 import { trackPresentationOpened } from "@/lib/analytics";
-import { getDefaultTenant } from "@/lib/tenants/tenant-config";
+import { getDefaultTenant, getTenantBySlug } from "@/lib/tenants/tenant-config";
 
 interface PresentLeadPageProps {
   leadId: string;
@@ -21,21 +21,45 @@ function PresentLeadContent({ leadId, tenantSlug }: PresentLeadPageProps) {
   );
   const [error, setError] = useState<string | null>(null);
 
+  const backPath = tenantSlug ? `/a/${tenantSlug}/admin` : "/admin";
+
   useEffect(() => {
+    if (!leadId) return;
     trackPresentationOpened({ lead_id: leadId });
     adminFetch(`/api/leads/${leadId}/presentation`)
       .then(async (res) => {
-        if (!res.ok) throw new Error("Presentation not found");
-        const data = (await res.json()) as { presentation: PresentationMode };
+        if (!res.ok) {
+          const body = (await res.json().catch(() => ({}))) as { error?: string };
+          throw new Error(body.error ?? `Presentation unavailable (${res.status})`);
+        }
+        const data = (await res.json()) as { presentation?: PresentationMode };
+        if (!data.presentation?.slides?.length) {
+          throw new Error("Presentation slides not generated yet");
+        }
         setPresentation(data.presentation);
       })
-      .catch(() => setError("Unable to load presentation"));
+      .catch((err: unknown) => {
+        setError(
+          err instanceof Error ? err.message : "Unable to load presentation"
+        );
+      });
   }, [leadId]);
 
   if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-navy text-white">
-        <p>{error}</p>
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-navy px-6 text-center text-white">
+        <p className="max-w-md text-sm">{error}</p>
+        <p className="max-w-md text-xs text-white/60">
+          Sign in with your admin password on this tenant, then run Reset Demo if
+          the lead was created before AI generation finished.
+        </p>
+        <button
+          type="button"
+          onClick={() => router.push(backPath)}
+          className="rounded-lg border border-champagne/40 px-4 py-2 text-sm text-champagne"
+        >
+          Back to admin
+        </button>
       </div>
     );
   }
@@ -48,10 +72,6 @@ function PresentLeadContent({ leadId, tenantSlug }: PresentLeadPageProps) {
     );
   }
 
-  const backPath = tenantSlug
-    ? `/a/${tenantSlug}/admin`
-    : "/admin";
-
   return (
     <PresentationModeViewer
       data={presentation}
@@ -62,7 +82,9 @@ function PresentLeadContent({ leadId, tenantSlug }: PresentLeadPageProps) {
 }
 
 export function PresentLeadPage(props: PresentLeadPageProps) {
-  const tenant = getDefaultTenant();
+  const tenant = props.tenantSlug
+    ? getTenantBySlug(props.tenantSlug)
+    : getDefaultTenant();
   return (
     <AdminAuthGate
       title="Present Brief"

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { verifyAdmin } from "@/lib/admin/verify-admin";
 import { fetchTenantScopedLead } from "@/lib/admin/lead-comments";
-import { createDecisionVersion } from "@/lib/decision/createDecisionVersion";
+import { recordDataRoomEvent } from "@/lib/data-room/recordDataRoomEvent";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { resolveTenantFromRequest } from "@/lib/tenants/tenant-resolver";
 
@@ -42,6 +42,14 @@ export async function PATCH(
     }
 
     const body = patchSchema.parse(await request.json());
+
+    const { data: previousItem } = await supabase
+      .from("decision_data_room_items")
+      .select("status, item_name")
+      .eq("id", itemId)
+      .eq("lead_id", leadId)
+      .maybeSingle();
+
     const { data, error } = await supabase
       .from("decision_data_room_items")
       .update({ ...body, updated_at: new Date().toISOString() })
@@ -54,11 +62,25 @@ export async function PATCH(
       return NextResponse.json({ error: "Item not found" }, { status: 404 });
     }
 
-    await createDecisionVersion(supabase, {
+    let timelineMessage: string | undefined;
+    if (
+      body.status &&
+      body.status !== previousItem?.status &&
+      (body.status === "reviewed" || body.status === "not_needed")
+    ) {
+      timelineMessage =
+        body.status === "reviewed"
+          ? `${data.item_name} marked reviewed.`
+          : `${data.item_name} marked not needed.`;
+    }
+
+    await recordDataRoomEvent(supabase, {
       tenantId: resolvedTenant.tenantId,
       leadId,
       changeSource: "data_room_update",
-      newSnapshot: { item: data.item_name, status: data.status },
+      timelineMessage:
+        timelineMessage ?? `${data.item_name} status updated to ${data.status}.`,
+      snapshot: { item: data.item_name, status: data.status },
     }).catch(() => undefined);
 
     return NextResponse.json({ item: data });

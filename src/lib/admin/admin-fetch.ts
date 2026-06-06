@@ -31,7 +31,7 @@ export async function adminFetch(
       ? getTenantSlugFromPath(window.location.pathname)
       : null;
   const scopedInput =
-    inputUrl.startsWith("/api/admin/")
+    inputUrl.startsWith("/api/admin/") || inputUrl.startsWith("/api/leads/")
       ? appendTenantQuery(inputUrl, tenantSlug)
       : inputUrl;
 

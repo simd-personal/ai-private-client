@@ -7,6 +7,7 @@ export interface CreateDecisionVersionInput {
   changedBy?: string | null;
   previousSnapshot?: Record<string, unknown> | null;
   newSnapshot?: Record<string, unknown> | null;
+  timelineSummary?: string;
 }
 
 export interface DecisionChangeSummary {
@@ -62,10 +63,13 @@ export async function createDecisionVersion(
   input: CreateDecisionVersionInput
 ): Promise<void> {
   const versionNumber = await getNextVersionNumber(supabase, input.leadId);
-  const aiChangeSummary = buildChangeSummary(
+  const baseSummary = buildChangeSummary(
     input.previousSnapshot,
     input.newSnapshot
   );
+  const aiChangeSummary = input.timelineSummary
+    ? { ...baseSummary, summary: input.timelineSummary }
+    : baseSummary;
 
   const { error } = await supabase.from("decision_versions").insert({
     tenant_id: input.tenantId,

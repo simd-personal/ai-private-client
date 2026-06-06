@@ -38,6 +38,7 @@ import { calculateWealthForecast } from "@/lib/wealth/calculateWealthForecast";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { generatePublicResultToken } from "@/lib/tokens";
 import { generateAndPersistStrategyRoom } from "@/lib/ai/persistStrategyRoom";
+import { recordIntakeDecisionVersion } from "@/lib/ai/persistDecisionLayer";
 import {
   linkSiteEventsToLead,
   recordLeadCreatedSiteEvent,
@@ -265,13 +266,16 @@ export async function processLeadSubmission(
 
     if (error) throw new Error(error.message);
 
+    await recordIntakeDecisionVersion(supabase, lead.id, context.tenantId);
+
     try {
       await generateAndPersistStrategyRoom(
         supabase,
         lead.id,
         "buyer",
         quizData,
-        tenant
+        tenant,
+        { tenantId: context.tenantId }
       );
     } catch (strategyError) {
       console.error("[strategy-room] buyer generation failed:", strategyError);
@@ -391,13 +395,16 @@ export async function processLeadSubmission(
 
     if (error) throw new Error(error.message);
 
+    await recordIntakeDecisionVersion(supabase, lead.id, context.tenantId);
+
     try {
       await generateAndPersistStrategyRoom(
         supabase,
         lead.id,
         "seller",
         quizData,
-        tenant
+        tenant,
+        { tenantId: context.tenantId }
       );
     } catch (strategyError) {
       console.error("[strategy-room] seller generation failed:", strategyError);
@@ -501,13 +508,16 @@ export async function processLeadSubmission(
 
     if (error) throw new Error(error.message);
 
+    await recordIntakeDecisionVersion(supabase, lead.id, context.tenantId);
+
     try {
       await generateAndPersistStrategyRoom(
         supabase,
         lead.id,
         "wealth_forecast",
         quizData,
-        tenant
+        tenant,
+        { tenantId: context.tenantId }
       );
     } catch (strategyError) {
       console.error(
@@ -651,13 +661,16 @@ export async function processLeadSubmission(
 
   if (error) throw new Error(error.message);
 
+  await recordIntakeDecisionVersion(supabase, lead.id, context.tenantId);
+
   try {
     await generateAndPersistStrategyRoom(
       supabase,
       lead.id,
       "equity",
       quizDataWithResolvedSource,
-      tenant
+      tenant,
+      { tenantId: context.tenantId }
     );
   } catch (strategyError) {
     console.error("[strategy-room] equity generation failed:", strategyError);

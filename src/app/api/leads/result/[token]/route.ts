@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { toPublicReport } from "@/lib/schemas/ai-report";
 import { toPublicStrategyRoomData } from "@/lib/schemas/ai-strategy-room";
+import {
+  toPublicDecisionLayerData,
+  type DataRoomItem,
+} from "@/lib/schemas/decision-layer";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
 export async function GET(
@@ -18,7 +22,7 @@ export async function GET(
     const { data, error } = await supabase
       .from("leads")
       .select(
-        "lead_type, ai_report, created_at, quiz_data, ai_strategy_room, ai_scenario_comparison, ai_advisor_coordination_map, ai_relationship_map, ai_red_flags_missing_info"
+        "id, lead_type, ai_report, created_at, quiz_data, ai_strategy_room, ai_scenario_comparison, ai_advisor_coordination_map, ai_relationship_map, ai_red_flags_missing_info, ai_decision_graph"
       )
       .eq("public_result_token", token)
       .single();
@@ -39,6 +43,17 @@ export async function GET(
 
     const strategyRoom = toPublicStrategyRoomData(data);
 
+    const { data: publicDataRoom } = await supabase
+      .from("decision_data_room_items")
+      .select("*")
+      .eq("lead_id", data.id)
+      .eq("visibility", "public");
+
+    const decisionLayer = toPublicDecisionLayerData(
+      data,
+      (publicDataRoom ?? []) as DataRoomItem[]
+    );
+
     const quizData = data.quiz_data as Record<string, unknown> | null;
     const sellerEstimatedValueRange =
       leadType === "seller" && quizData?.estimatedValueRange != null
@@ -49,6 +64,7 @@ export async function GET(
       leadType,
       report,
       strategyRoom,
+      decisionLayer,
       createdAt: data.created_at,
       sellerEstimatedValueRange,
     });

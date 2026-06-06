@@ -25,6 +25,7 @@ import {
   isPremiumSellerValue,
 } from "@/lib/seller/seller-tier";
 import type { SellerQuizData } from "@/lib/schemas/quiz";
+import type { PublicDecisionLayerData } from "@/lib/schemas/decision-layer";
 import type { PublicStrategyRoomData } from "@/lib/schemas/ai-strategy-room";
 import {
   getQuestionsForAdvisor,
@@ -44,6 +45,7 @@ interface ResultApiResponse {
     | PublicEquityMoveReport
     | PublicWealthForecastReport;
   strategyRoom?: PublicStrategyRoomData | null;
+  decisionLayer?: PublicDecisionLayerData | null;
   createdAt: string;
   sellerEstimatedValueRange?: string;
 }
@@ -575,6 +577,7 @@ function ResultByToken({ token }: { token: string }) {
 
         <PublicStrategyRoomSections
           data={data.strategyRoom ?? null}
+          decisionLayer={data.decisionLayer ?? null}
           recommendedNextStep={
             (data.report as { recommendedNextStep?: string }).recommendedNextStep
           }

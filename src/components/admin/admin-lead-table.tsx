@@ -36,6 +36,7 @@ import type { PropertyIntelligence } from "@/lib/property/types";
 import { adminFetch } from "@/lib/admin/admin-fetch";
 import type { LeadSessionJourney } from "@/lib/analytics/server";
 import { toAdminStrategyRoomData } from "@/lib/schemas/ai-strategy-room";
+import { toAdminDecisionLayerData } from "@/lib/schemas/decision-layer";
 import type {
   BuyerQuizData,
   EquityQuizData,
@@ -93,6 +94,11 @@ export interface AdminLead {
   ai_generated_at?: string | null;
   ai_generation_source?: string | null;
   ai_generation_model?: string | null;
+  ai_decision_graph?: unknown;
+  ai_compliance_guardrails?: unknown;
+  ai_decision_timeline_summary?: unknown;
+  ai_data_room_suggestions?: unknown;
+  decision_stage?: string | null;
   quiz_data:
     | BuyerQuizData
     | (SellerQuizData & {
@@ -383,6 +389,7 @@ export function AdminLeadTable({
           <AdminAiStrategySection
             leadId={lead.id}
             strategyData={toAdminStrategyRoomData(lead)}
+            decisionData={toAdminDecisionLayerData(lead)}
             internalSummary={lead.internal_lead_summary}
             suggestedFollowUp={lead.suggested_follow_up_message}
             concierge={getLeadConciergeFromQuizData(

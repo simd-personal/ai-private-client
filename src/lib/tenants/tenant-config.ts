@@ -88,11 +88,44 @@ const DEMO_AGENT_TENANT: TenantConfig = {
     "Demo workspace for private client real estate planning and advisor coordination.",
 };
 
+const MERCER_DEMO_TENANT: TenantConfig = {
+  id: "mercer-newport-demo",
+  slug: "mercer-newport-demo",
+  brandName: "Private Property Planning Desk",
+  agentName: "Mercer Newport Beach Advisory Team",
+  agentTitle: "Private Wealth Advisory Team",
+  brokerageName: "Mercer Advisors Demo",
+  agentLicenseNumber: "",
+  brokerageLicenseNumber: "",
+  notificationEmail: "demo@private-client-desk.local",
+  contactEmail: "demo@private-client-desk.local",
+  phone: "(949) 555-0199",
+  bookingUrl: "",
+  logoUrl: "",
+  primaryColor: "#1a2332",
+  accentColor: "#c9b896",
+  supportedStates: ["CA", "CO"],
+  serviceAreas: [
+    "Newport Beach",
+    "Orange County",
+    "Aspen",
+    "Los Angeles",
+    "Southern California",
+  ],
+  defaultState: "CA",
+  disclaimerText:
+    "This private brief is for planning and coordination purposes only. It is not legal, tax, lending, investment, appraisal, or valuation advice. Tax topics should be reviewed with a CPA, legal/entity topics with an attorney, lending topics with a lender or private banker, and real estate execution topics with a licensed agent. Demo tenant only — example workflow; not affiliated with or endorsed by Mercer Advisors.",
+  seoBaseTitle: "Private Property Planning Desk | Demo",
+  seoBaseDescription:
+    "Demo private client property planning workspace — example wealth advisory coordination (not affiliated with Mercer Advisors).",
+};
+
 const TENANTS: Record<string, TenantConfig> = {
   "private-client": PRIVATE_CLIENT_TENANT,
   /** Backwards-compatible slug — maps to default Private Client tenant. */
   astoria: PRIVATE_CLIENT_TENANT,
   "demo-agent": DEMO_AGENT_TENANT,
+  "mercer-newport-demo": MERCER_DEMO_TENANT,
 };
 
 export function getDefaultTenant(): TenantConfig {

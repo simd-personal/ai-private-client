@@ -28,6 +28,9 @@ import {
 } from "../src/lib/equity/calculateEquityMove";
 import { calculateWealthForecast } from "../src/lib/wealth/calculateWealthForecast";
 import { generateStrategyRoom } from "../src/lib/ai/generateStrategyRoom";
+import { buildDecisionGraph } from "../src/lib/ai/buildDecisionGraph";
+import { buildDataRoomSuggestions } from "../src/lib/ai/buildDataRoomSuggestions";
+import { buildComplianceGuardrails } from "../src/lib/ai/buildComplianceGuardrails";
 import {
   intakeContextFromPrivateClientDemo,
 } from "../src/lib/ai/intake-context";
@@ -120,9 +123,18 @@ async function runPrivateClientDemoTest(
   const result = await generateStrategyRoom(ctx);
   const { output } = result;
 
+  const decisionGraph = buildDecisionGraph(ctx, output);
+  const dataRoomSuggestions = buildDataRoomSuggestions(ctx, output);
+  const guardrails = buildComplianceGuardrails(output, decisionGraph);
+
   console.log(`\nAI source:        ${result.source}`);
   console.log(`Model succeeded:  ${result.model}`);
   console.log(`Readiness score:  ${output.dealReadiness.readinessScore}`);
+  console.log(`Decision graph:   ${decisionGraph.graphTitle}`);
+  console.log(`Decision stage:   ${decisionGraph.decisionStage}`);
+  console.log(`Decision blockers:${decisionGraph.decisionBlockers.length}`);
+  console.log(`Data room items:  ${dataRoomSuggestions.items.length}`);
+  console.log(`Guardrails:       ${guardrails.overallStatus} (${guardrails.checks.length} checks)`);
   console.log(
     `Scenario titles:  ${output.scenarioComparison.scenarios.map((s) => s.title).join(" | ")}`
   );

@@ -42,7 +42,8 @@ export async function POST(
         lead_type: lead.lead_type as LeadType,
         quiz_data: lead.quiz_data,
       },
-      resolvedTenant.tenant
+      resolvedTenant.tenant,
+      { tenantId: resolvedTenant.tenantId }
     );
 
     const { data: updated } = await supabase

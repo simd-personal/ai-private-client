@@ -1,13 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AdvisorBriefsPanel } from "@/components/ai/AdvisorBriefsPanel";
 import { AdvisorCoordinationMapPanel } from "@/components/ai/AdvisorCoordinationMap";
+import { ComplianceGuardrailsPanel } from "@/components/ai/ComplianceGuardrailsPanel";
+import { DataRoomChecklist } from "@/components/ai/DataRoomChecklist";
 import { DealReadinessScore } from "@/components/ai/DealReadinessScore";
+import { DecisionGraphPanel } from "@/components/ai/DecisionGraph";
+import { DecisionTimeline } from "@/components/ai/DecisionTimeline";
+import { MeetingCopilot } from "@/components/ai/MeetingCopilot";
 import { MeetingPrepPackPanel } from "@/components/ai/MeetingPrepPack";
 import { MissingInfoPanel } from "@/components/ai/MissingInfoPanel";
 import { PresentBriefButton, PresentationModeViewer } from "@/components/ai/PresentationMode";
-import { RelationshipMapPanel } from "@/components/ai/RelationshipMap";
 import { ScenarioComparisonPanel } from "@/components/ai/ScenarioComparison";
 import { StrategyRoomCard } from "@/components/ai/StrategyRoomCard";
 import { WhiteGloveFollowUpPanel } from "@/components/ai/WhiteGloveFollowUp";
@@ -19,14 +23,21 @@ import {
   trackMeetingPrepViewed,
 } from "@/lib/analytics";
 import type { AdminStrategyRoomData } from "@/lib/schemas/ai-strategy-room";
+import type { AdminDecisionLayerData, DataRoomItem } from "@/lib/schemas/decision-layer";
+import { READINESS_LABEL_DISPLAY } from "@/lib/schemas/ai-strategy-room";
 import type { LeadConcierge } from "@/lib/schemas/lead-concierge";
 
 const TABS = [
   "Strategy Room",
+  "Decision Graph",
   "Scenarios",
   "Advisor Map",
   "Advisor Briefs",
   "Readiness",
+  "Data Room",
+  "Guardrails",
+  "Timeline",
+  "Meeting Copilot",
   "Meeting Prep",
   "Follow-Up",
   "Items to Clarify",
@@ -38,6 +49,7 @@ type Tab = (typeof TABS)[number];
 interface AdminAiStrategySectionProps {
   leadId: string;
   strategyData: AdminStrategyRoomData;
+  decisionData: AdminDecisionLayerData;
   internalSummary: string;
   suggestedFollowUp: string;
   concierge: LeadConcierge | null;
@@ -48,6 +60,7 @@ interface AdminAiStrategySectionProps {
 export function AdminAiStrategySection({
   leadId,
   strategyData,
+  decisionData,
   internalSummary,
   suggestedFollowUp,
   concierge,
@@ -57,8 +70,25 @@ export function AdminAiStrategySection({
   const [tab, setTab] = useState<Tab>("Strategy Room");
   const [regenerating, setRegenerating] = useState(false);
   const [showPresentation, setShowPresentation] = useState(false);
+  const [dataRoomItems, setDataRoomItems] = useState<DataRoomItem[]>(
+    decisionData.dataRoomItems
+  );
 
   const hasData = Boolean(strategyData.strategyRoom);
+
+  useEffect(() => {
+    if (!hasData) return;
+    void adminFetch(`/api/leads/${leadId}/data-room`)
+      .then((res) => res.json())
+      .then((json: { items: DataRoomItem[] }) => setDataRoomItems(json.items));
+  }, [hasData, leadId, strategyData.aiGeneratedAt]);
+
+  const dataRoomComplete = dataRoomItems.filter(
+    (i) => i.status === "reviewed" || i.status === "not_needed"
+  ).length;
+  const dataRoomTotal = dataRoomItems.length;
+  const missingCount =
+    strategyData.itemsToClarify?.missingInformation.length ?? 0;
 
   const regenerate = async () => {
     setRegenerating(true);
@@ -112,6 +142,40 @@ export function AdminAiStrategySection({
         </div>
       </div>
 
+      <div className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        <StatusCard
+          label="Decision Stage"
+          value={(decisionData.decisionStage ?? "exploration").replace(/_/g, " ")}
+        />
+        <StatusCard
+          label="Readiness Score"
+          value={
+            strategyData.dealReadiness
+              ? `${strategyData.dealReadiness.readinessScore} · ${READINESS_LABEL_DISPLAY[strategyData.dealReadiness.readinessLabel]}`
+              : "—"
+          }
+        />
+        <StatusCard
+          label="Guardrails"
+          value={decisionData.complianceGuardrails?.overallStatus ?? "pending"}
+        />
+        <StatusCard
+          label="Data Room"
+          value={
+            dataRoomTotal > 0
+              ? `${dataRoomComplete}/${dataRoomTotal} complete`
+              : "—"
+          }
+        />
+        <StatusCard label="Missing Info" value={String(missingCount)} />
+        <StatusCard
+          label="Next Best Action"
+          value={
+            strategyData.dealReadiness?.nextBestAction?.slice(0, 48) ?? "—"
+          }
+        />
+      </div>
+
       <div className="mb-4 flex flex-wrap gap-1 border-b border-gray-100 pb-2">
         {TABS.map((t) => (
           <button
@@ -133,6 +197,13 @@ export function AdminAiStrategySection({
         {tab === "Strategy Room" && strategyData.strategyRoom && (
           <StrategyRoomCard data={strategyData.strategyRoom} />
         )}
+        {tab === "Decision Graph" && decisionData.decisionGraph && (
+          <DecisionGraphPanel
+            data={decisionData.decisionGraph}
+            admin
+            leadId={leadId}
+          />
+        )}
         {tab === "Scenarios" && strategyData.scenarioComparison && (
           <ScenarioComparisonPanel data={strategyData.scenarioComparison} />
         )}
@@ -150,6 +221,17 @@ export function AdminAiStrategySection({
         {tab === "Readiness" && strategyData.dealReadiness && (
           <DealReadinessScore data={strategyData.dealReadiness} />
         )}
+        {tab === "Data Room" && (
+          <DataRoomChecklist leadId={leadId} admin />
+        )}
+        {tab === "Guardrails" && (
+          <ComplianceGuardrailsPanel
+            leadId={leadId}
+            initialData={decisionData.complianceGuardrails}
+          />
+        )}
+        {tab === "Timeline" && <DecisionTimeline leadId={leadId} />}
+        {tab === "Meeting Copilot" && <MeetingCopilot leadId={leadId} />}
         {tab === "Meeting Prep" && strategyData.meetingPrepPack && (
           <div onFocus={() => trackMeetingPrepViewed({ lead_id: leadId })}>
             <MeetingPrepPackPanel
@@ -194,6 +276,19 @@ export function AdminAiStrategySection({
         </div>
         {concierge && <AdminLeadConciergeSection concierge={concierge} />}
       </div>
+    </div>
+  );
+}
+
+function StatusCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-gray-100 bg-beige/20 px-3 py-2">
+      <p className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
+        {label}
+      </p>
+      <p className="mt-0.5 truncate text-sm font-medium capitalize text-navy">
+        {value}
+      </p>
     </div>
   );
 }

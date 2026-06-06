@@ -4,6 +4,7 @@ import {
   generateStrategyRoom,
   strategyRoomToDbColumns,
 } from "@/lib/ai/generateStrategyRoom";
+import { persistDecisionLayer } from "@/lib/ai/persistDecisionLayer";
 import type { LeadType } from "@/lib/ai/intake-context";
 import type {
   BuyerQuizData,
@@ -18,7 +19,8 @@ export async function generateAndPersistStrategyRoom(
   leadId: string,
   leadType: LeadType,
   quizData: BuyerQuizData | SellerQuizData | EquityQuizData | WealthQuizData,
-  tenant: TenantConfig
+  tenant: TenantConfig,
+  options?: { tenantId?: string | null; changeSource?: string }
 ): Promise<void> {
   const ctx = buildIntakeContext(leadType, quizData);
   const { output, source, model } = await generateStrategyRoom(ctx, tenant);
@@ -33,6 +35,15 @@ export async function generateAndPersistStrategyRoom(
     console.error("[strategy-room] Failed to persist:", error);
     throw new Error(error.message);
   }
+
+  try {
+    await persistDecisionLayer(supabase, leadId, options?.tenantId ?? null, ctx, output, {
+      source,
+      changeSource: options?.changeSource ?? "ai_generated",
+    });
+  } catch (decisionError) {
+    console.error("[decision-layer] Failed to persist:", decisionError);
+  }
 }
 
 export async function regenerateStrategyRoomForLead(
@@ -42,7 +53,8 @@ export async function regenerateStrategyRoomForLead(
     lead_type: LeadType;
     quiz_data: unknown;
   },
-  tenant: TenantConfig
+  tenant: TenantConfig,
+  options?: { tenantId?: string | null }
 ) {
   const quizData = lead.quiz_data as
     | BuyerQuizData
@@ -55,6 +67,7 @@ export async function regenerateStrategyRoomForLead(
     lead.id,
     lead.lead_type,
     quizData,
-    tenant
+    tenant,
+    { tenantId: options?.tenantId ?? null, changeSource: "regenerate_ai" }
   );
 }

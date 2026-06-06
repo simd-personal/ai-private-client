@@ -143,6 +143,51 @@ export function trackMeetingPrepViewed(metadata?: AnalyticsPayload): void {
   void siteEvents.trackSiteEvent("meeting_prep_viewed", sanitizeMeta(metadata));
 }
 
+export function trackDecisionGraphViewed(metadata?: AnalyticsPayload): void {
+  dispatch("decision_graph_viewed", metadata);
+  void siteEvents.trackSiteEvent("decision_graph_viewed", sanitizeMeta(metadata));
+}
+
+export function trackDataRoomViewed(metadata?: AnalyticsPayload): void {
+  dispatch("data_room_viewed", metadata);
+  void siteEvents.trackSiteEvent("data_room_viewed", sanitizeMeta(metadata));
+}
+
+export function trackDataRoomItemUpdated(metadata?: AnalyticsPayload): void {
+  dispatch("data_room_item_updated", metadata);
+  void siteEvents.trackSiteEvent("data_room_item_updated", sanitizeMeta(metadata));
+}
+
+export function trackGuardrailsViewed(metadata?: AnalyticsPayload): void {
+  dispatch("guardrails_viewed", metadata);
+  void siteEvents.trackSiteEvent("guardrails_viewed", sanitizeMeta(metadata));
+}
+
+export function trackGuardrailsRechecked(metadata?: AnalyticsPayload): void {
+  dispatch("guardrails_rechecked", metadata);
+  void siteEvents.trackSiteEvent("guardrails_rechecked", sanitizeMeta(metadata));
+}
+
+export function trackDecisionTimelineViewed(metadata?: AnalyticsPayload): void {
+  dispatch("decision_timeline_viewed", metadata);
+  void siteEvents.trackSiteEvent("decision_timeline_viewed", sanitizeMeta(metadata));
+}
+
+export function trackMeetingCopilotViewed(metadata?: AnalyticsPayload): void {
+  dispatch("meeting_copilot_viewed", metadata);
+  void siteEvents.trackSiteEvent("meeting_copilot_viewed", sanitizeMeta(metadata));
+}
+
+export function trackMeetingNoteAdded(metadata?: AnalyticsPayload): void {
+  dispatch("meeting_note_added", metadata);
+  void siteEvents.trackSiteEvent("meeting_note_added", sanitizeMeta(metadata));
+}
+
+export function trackMeetingSummaryGenerated(metadata?: AnalyticsPayload): void {
+  dispatch("meeting_summary_generated", metadata);
+  void siteEvents.trackSiteEvent("meeting_summary_generated", sanitizeMeta(metadata));
+}
+
 function sanitizeMeta(
   metadata?: AnalyticsPayload
 ): Record<string, string | number | boolean> | undefined {

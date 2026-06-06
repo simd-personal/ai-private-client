@@ -1,0 +1,51 @@
+{
+  "leadType": "equity",
+  "demoScenario": "mercer-newport-aspen-transition",
+  "demoTenantSlug": "mercer-newport-demo",
+  "demoLabel": "Mercer Newport Demo — example private wealth advisory workflow (Demo only; not affiliated with Mercer Advisors)",
+  "propertyAddress": {
+    "street": "Private Aspen Residence",
+    "city": "Aspen",
+    "state": "CO",
+    "zip": "81611"
+  },
+  "currentHomeCity": "Aspen",
+  "currentHomeState": "Colorado",
+  "yearPurchased": 2012,
+  "originalPurchasePrice": 3200000,
+  "estimatedCurrentValue": 6800000,
+  "currentValueSource": "user_adjusted",
+  "valueEstimateChoice": "adjust",
+  "mortgageBalance": 1400000,
+  "estimatedImprovements": 600000,
+  "filingStatus": "married_or_joint",
+  "nextMoveGoal": "relocate within California",
+  "desiredNextLocation": "Newport Beach, CA — waterfront",
+  "timeline": "6 to 12 months",
+  "biggestConcern": "privacy",
+  "freeText": "Demo scenario: client wants to sell an Aspen property and buy waterfront property in Newport Beach. Privacy level is high with a 6–12 month timeline. Partial financing with possible trust ownership. Needs licensed agent referral, lender/private banker review, CPA and attorney review, and privacy-first execution. This is an example wealth advisory workflow for demonstration only.",
+  "privateClientContext": {
+    "objective": "Sell Aspen property and acquire waterfront property in Newport Beach",
+    "currentProperty": "Aspen, CO",
+    "targetMarket": "Newport Beach, CA",
+    "timeline": "6–12 months",
+    "financingContext": "Partial financing",
+    "privacyLevel": "high",
+    "advisorsInvolved": ["CPA", "attorney", "wealth advisor"],
+    "ownershipStructure": "Possible trust ownership",
+    "needs": [
+      "Licensed agent referral",
+      "Lender/private banker review",
+      "Privacy-first execution"
+    ],
+    "freeText": "Demo only — example private client property transition for wealth advisory firm pitch. Not affiliated with Mercer Advisors."
+  },
+  "contact": {
+    "firstName": "Demo",
+    "lastName": "Private Client",
+    "email": "mercer-demo@private-client-desk.local",
+    "phone": "9495550199",
+    "preferredContactMethod": "email",
+    "consentGiven": true
+  }
+}

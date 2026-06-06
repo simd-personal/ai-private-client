@@ -18,6 +18,15 @@ export const SITE_EVENT_NAMES = [
   "advisor_brief_generated",
   "followup_copied",
   "meeting_prep_viewed",
+  "decision_graph_viewed",
+  "data_room_viewed",
+  "data_room_item_updated",
+  "guardrails_viewed",
+  "guardrails_rechecked",
+  "decision_timeline_viewed",
+  "meeting_copilot_viewed",
+  "meeting_note_added",
+  "meeting_summary_generated",
 ] as const;
 
 export type SiteEventName = (typeof SITE_EVENT_NAMES)[number];

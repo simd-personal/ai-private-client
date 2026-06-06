@@ -11,7 +11,10 @@
     "supabase:stop": "supabase stop",
     "supabase:status": "supabase status",
     "supabase:reset": "supabase db reset",
+    "supabase:verify": "tsx scripts/verify-supabase-schema.ts",
     "ai:test": "AI_TEST=1 tsx scripts/test_ai_report.ts",
+    "demo:mercer": "tsx scripts/create_mercer_demo.ts",
+    "verify:public-safety": "tsx scripts/verify-public-safety.ts",
     "seed:prod-leads": "tsx scripts/seed_production_test_leads.ts",
     "seed:prod-leads:cleanup": "tsx scripts/delete_production_test_leads.ts",
     "test:prod-seller": "tsx scripts/test_production_seller_lead.ts"

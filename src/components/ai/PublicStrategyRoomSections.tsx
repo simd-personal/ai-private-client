@@ -2,8 +2,9 @@
 
 import { useEffect, useRef } from "react";
 import { AdvisorCoordinationMapPanel } from "@/components/ai/AdvisorCoordinationMap";
+import { DataRoomChecklist } from "@/components/ai/DataRoomChecklist";
+import { DecisionGraphPanel } from "@/components/ai/DecisionGraph";
 import { MissingInfoPanel } from "@/components/ai/MissingInfoPanel";
-import { RelationshipMapPanel } from "@/components/ai/RelationshipMap";
 import { ScenarioComparisonPanel } from "@/components/ai/ScenarioComparison";
 import {
   StrategyRoomCard,
@@ -16,15 +17,18 @@ import {
   trackStrategyRoomViewed,
 } from "@/lib/analytics";
 import type { PublicStrategyRoomData } from "@/lib/schemas/ai-strategy-room";
+import type { PublicDecisionLayerData } from "@/lib/schemas/decision-layer";
 
 interface PublicStrategyRoomSectionsProps {
   data: PublicStrategyRoomData | null;
+  decisionLayer?: PublicDecisionLayerData | null;
   recommendedNextStep?: string;
   loading?: boolean;
 }
 
 export function PublicStrategyRoomSections({
   data,
+  decisionLayer,
   recommendedNextStep,
   loading,
 }: PublicStrategyRoomSectionsProps) {
@@ -88,8 +92,15 @@ export function PublicStrategyRoomSections({
         </div>
       )}
 
-      {data.relationshipIntelligenceMap && (
-        <RelationshipMapPanel data={data.relationshipIntelligenceMap} />
+      {decisionLayer?.decisionGraph && (
+        <DecisionGraphPanel data={decisionLayer.decisionGraph} />
+      )}
+
+      {decisionLayer && decisionLayer.dataRoomItems.length > 0 && (
+        <DataRoomChecklist
+          leadId=""
+          publicItems={decisionLayer.dataRoomItems}
+        />
       )}
 
       {data.itemsToClarify && (

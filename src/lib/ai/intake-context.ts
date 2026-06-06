@@ -93,7 +93,20 @@ export function buildIntakeContext(
   }
 
   if (leadType === "equity") {
-    const q = quizData as EquityQuizData;
+    const q = quizData as EquityQuizData & {
+      demoScenario?: string;
+      privateClientContext?: Record<string, unknown>;
+    };
+    if (
+      q.demoScenario === "mercer-newport-aspen-transition" &&
+      q.privateClientContext
+    ) {
+      return intakeContextFromPrivateClientDemo({
+        ...q.privateClientContext,
+        firstName: q.contact.firstName,
+        lastName: q.contact.lastName,
+      });
+    }
     const current = `${q.propertyAddress.city}, ${q.propertyAddress.state}`;
     return {
       ...base,

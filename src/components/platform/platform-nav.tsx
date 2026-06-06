@@ -13,6 +13,11 @@ const tabs = [
     match: (path: string) => path === "/platform",
   },
   {
+    href: "/platform/demo",
+    label: "Demo",
+    match: (path: string) => path.startsWith("/platform/demo"),
+  },
+  {
     href: "/platform/tenants",
     label: "Tenants",
     match: (path: string) => path.startsWith("/platform/tenants"),

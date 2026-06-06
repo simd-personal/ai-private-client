@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { usePathname } from "next/navigation";
 import {
   AdminLeadFilters,
   type AdminFiltersState,
@@ -18,7 +19,8 @@ import { adminFetch } from "@/lib/admin/admin-fetch";
 import type { LeadSessionJourney } from "@/lib/analytics/server";
 import { exportLeadsToCsv } from "@/lib/admin/export-csv";
 import { filterAndSortLeads } from "@/lib/admin/filter-leads";
-import { getDefaultTenant } from "@/lib/tenants/tenant-config";
+import { getDefaultTenant, getTenantBySlug } from "@/lib/tenants/tenant-config";
+import { getTenantSlugFromPath } from "@/lib/tenants/tenant-paths";
 
 const defaultFilters: AdminFiltersState = {
   search: "",
@@ -30,7 +32,9 @@ const defaultFilters: AdminFiltersState = {
 };
 
 function AdminLeadsDashboard() {
-  const tenant = getDefaultTenant();
+  const pathname = usePathname();
+  const tenantSlug = getTenantSlugFromPath(pathname);
+  const tenant = tenantSlug ? getTenantBySlug(tenantSlug) : getDefaultTenant();
   const [tenantBrandName, setTenantBrandName] = useState(tenant.brandName);
   const [leads, setLeads] = useState<AdminLead[]>([]);
   const [leadJourneys, setLeadJourneys] = useState<
@@ -138,13 +142,16 @@ function AdminLeadsDashboard() {
         leads={filteredLeads}
         leadJourneys={leadJourneys}
         onRefresh={() => void fetchLeads()}
+        tenantSlug={tenantSlug ?? undefined}
       />
     </AdminPageShell>
   );
 }
 
 export function AdminPageView() {
-  const tenant = getDefaultTenant();
+  const pathname = usePathname();
+  const tenantSlug = getTenantSlugFromPath(pathname);
+  const tenant = tenantSlug ? getTenantBySlug(tenantSlug) : getDefaultTenant();
   return (
     <AdminAuthGate
       title="Lead Dashboard"

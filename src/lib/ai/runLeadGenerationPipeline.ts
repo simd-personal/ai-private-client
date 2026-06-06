@@ -58,6 +58,9 @@ import {
   trackLeadGenerationStageReady,
   trackLeadGenerationStarted,
 } from "@/lib/analytics";
+import {
+  timeGenerationStage,
+} from "@/lib/ai/generation-timing";
 
 type PipelineQuizData =
   | BuyerQuizData
@@ -343,81 +346,14 @@ export async function runLeadGenerationPipeline(
       });
     }
 
-    await updateLeadGenerationStage(supabase, leadId, "lead_concierge", "running");
-
-    try {
-      const conciergeInput: LeadConciergeInput = {
-        leadType,
-        quizData,
-        leadScore,
-        leadTemperature,
-        internalLeadSummary,
-        ...(leadType === "wealth_forecast"
-          ? {
-              wealthCalculations: (quizData as WealthQuizData & {
-                calculations?: ReturnType<typeof calculateWealthForecast>;
-              }).calculations,
-            }
-          : {}),
-        ...(leadType === "equity"
-          ? {
-              equityCalculations: (quizData as EquityQuizData & {
-                calculations?: ReturnType<typeof calculateEquityMove>;
-              }).calculations,
-              equityPropertyIntelligence: (
-                quizData as EquityQuizData & {
-                  equityPropertyIntelligence?: Awaited<
-                    ReturnType<typeof enrichEquityProperty>
-                  >;
-                }
-              ).equityPropertyIntelligence,
-            }
-          : {}),
-      };
-
-      const withConcierge = await attachLeadConcierge(
-        quizData as Record<string, unknown>,
-        conciergeInput
-      );
-      quizData = withConcierge as unknown as PipelineQuizData;
-
-      await supabase
-        .from("leads")
-        .update({ quiz_data: quizData })
-        .eq("id", leadId);
-
-      await updateLeadGenerationStage(
-        supabase,
-        leadId,
-        "lead_concierge",
-        "ready"
-      );
-      trackLeadGenerationStageReady({
-        lead_id: leadId,
-        stage: "lead_concierge",
-      });
-    } catch (conciergeError) {
-      console.error("[generation-pipeline] concierge failed:", conciergeError);
-      await updateLeadGenerationStage(
-        supabase,
-        leadId,
-        "lead_concierge",
-        "failed",
-        {
-          error:
-            conciergeError instanceof Error
-              ? conciergeError.message
-              : "Concierge failed",
-        }
-      );
-    }
-
     await updateLeadGenerationStage(supabase, leadId, "strategy_room", "running");
-    await updateLeadGenerationStage(supabase, leadId, "presentation", "running");
 
     try {
       const ctx = buildIntakeContext(leadType, quizData);
-      const { output, source, model } = await generateStrategyRoom(ctx, tenant);
+      const { output, source, model } = await timeGenerationStage(
+        "strategy_room",
+        () => generateStrategyRoom(ctx, tenant)
+      );
       const columns = strategyRoomToDbColumns(output, { source, model });
 
       const { error: strategyError } = await supabase
@@ -554,6 +490,74 @@ export async function runLeadGenerationPipeline(
         leadId,
         "advisor_action_board",
         "skipped"
+      );
+    }
+
+    await updateLeadGenerationStage(supabase, leadId, "lead_concierge", "running");
+
+    try {
+      const conciergeInput: LeadConciergeInput = {
+        leadType,
+        quizData,
+        leadScore,
+        leadTemperature,
+        internalLeadSummary,
+        ...(leadType === "wealth_forecast"
+          ? {
+              wealthCalculations: (quizData as WealthQuizData & {
+                calculations?: ReturnType<typeof calculateWealthForecast>;
+              }).calculations,
+            }
+          : {}),
+        ...(leadType === "equity"
+          ? {
+              equityCalculations: (quizData as EquityQuizData & {
+                calculations?: ReturnType<typeof calculateEquityMove>;
+              }).calculations,
+              equityPropertyIntelligence: (
+                quizData as EquityQuizData & {
+                  equityPropertyIntelligence?: Awaited<
+                    ReturnType<typeof enrichEquityProperty>
+                  >;
+                }
+              ).equityPropertyIntelligence,
+            }
+          : {}),
+      };
+
+      const withConcierge = await timeGenerationStage("lead_concierge", () =>
+        attachLeadConcierge(quizData as Record<string, unknown>, conciergeInput)
+      );
+      quizData = withConcierge as unknown as PipelineQuizData;
+
+      await supabase
+        .from("leads")
+        .update({ quiz_data: quizData })
+        .eq("id", leadId);
+
+      await updateLeadGenerationStage(
+        supabase,
+        leadId,
+        "lead_concierge",
+        "ready"
+      );
+      trackLeadGenerationStageReady({
+        lead_id: leadId,
+        stage: "lead_concierge",
+      });
+    } catch (conciergeError) {
+      console.error("[generation-pipeline] concierge failed:", conciergeError);
+      await updateLeadGenerationStage(
+        supabase,
+        leadId,
+        "lead_concierge",
+        "failed",
+        {
+          error:
+            conciergeError instanceof Error
+              ? conciergeError.message
+              : "Concierge failed",
+        }
       );
     }
 

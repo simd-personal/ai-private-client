@@ -52,7 +52,10 @@ with expected(col) as (
     ('ai_demo_version'),
     ('ai_generated_at'),
     ('ai_generation_source'),
-    ('ai_generation_model')
+    ('ai_generation_model'),
+    ('generation_status'),
+    ('fast_public_brief'),
+    ('public_result_ready_at')
 )
 select 'MISSING COLUMN (leads)', e.col
 from expected e

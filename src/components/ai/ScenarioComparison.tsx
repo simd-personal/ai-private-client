@@ -7,7 +7,8 @@ interface ScenarioComparisonProps {
 
 export function ScenarioComparisonPanel({ data }: ScenarioComparisonProps) {
   return (
-    <ReportCard title="Scenario Comparison">
+    <div data-testid="scenario-comparison-section">
+      <ReportCard title="Scenario Comparison">
       <p className="mb-6 text-sm text-gray-500">{data.overallScenarioNote}</p>
       <div className="grid gap-4 lg:grid-cols-3">
         {data.scenarios.map((scenario) => (
@@ -36,6 +37,7 @@ export function ScenarioComparisonPanel({ data }: ScenarioComparisonProps) {
         ))}
       </div>
     </ReportCard>
+    </div>
   );
 }
 

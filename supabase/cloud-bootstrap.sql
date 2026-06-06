@@ -921,3 +921,12 @@ end $$;
 
 create index if not exists leads_generation_status_idx
   on public.leads (generation_status);
+
+
+-- ========== 019_fast_public_result_brief.sql ==========
+-- Fast deterministic public brief for immediate result page usefulness
+
+alter table public.leads
+  add column if not exists fast_public_brief jsonb,
+  add column if not exists fast_public_brief_generated_at timestamptz,
+  add column if not exists public_result_ready_at timestamptz;

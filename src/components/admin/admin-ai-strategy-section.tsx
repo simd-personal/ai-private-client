@@ -49,6 +49,17 @@ const TABS = [
 
 type Tab = (typeof TABS)[number];
 
+const TAB_TEST_IDS: Partial<Record<Tab, string>> = {
+  "Strategy Room": "admin-tab-strategy-room",
+  "Decision Graph": "admin-tab-decision-graph",
+  "Action Board": "admin-tab-action-board",
+  "Data Room": "admin-tab-data-room",
+  Guardrails: "admin-tab-guardrails",
+  Timeline: "admin-tab-timeline",
+  "Meeting Copilot": "admin-tab-meeting-copilot",
+  Presentation: "admin-tab-presentation",
+};
+
 interface AdminAiStrategySectionProps {
   leadId: string;
   strategyData: AdminStrategyRoomData;
@@ -176,11 +187,15 @@ export function AdminAiStrategySection({
         />
       </div>
 
-      <div className="mb-4 flex flex-wrap gap-1 border-b border-gray-100 pb-2">
+      <div
+        className="mb-4 flex flex-wrap gap-1 border-b border-gray-100 pb-2"
+        data-testid="admin-ai-tabs"
+      >
         {TABS.map((t) => (
           <button
             key={t}
             type="button"
+            data-testid={TAB_TEST_IDS[t]}
             onClick={() => setTab(t)}
             className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
               tab === t
@@ -193,7 +208,7 @@ export function AdminAiStrategySection({
         ))}
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-4" data-testid="admin-tab-content">
         {tab === "Strategy Room" && strategyData.strategyRoom && (
           <StrategyRoomCard data={strategyData.strategyRoom} />
         )}

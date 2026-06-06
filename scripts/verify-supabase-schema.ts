@@ -24,6 +24,7 @@ const REQUIRED_TABLES = [
   "decision_data_room_items",
   "decision_versions",
   "lead_meeting_notes",
+  "advisor_action_items",
 ] as const;
 
 const REQUIRED_LEAD_COLUMNS = [
@@ -37,6 +38,16 @@ const REQUIRED_LEAD_COLUMNS = [
   "ai_data_room_suggestions",
   "decision_stage",
   "ai_advisor_action_board",
+  "generation_status",
+  "generation_progress",
+  "base_report_status",
+  "strategy_room_status",
+  "decision_layer_status",
+  "advisor_action_board_status",
+  "presentation_status",
+  "fast_public_brief",
+  "fast_public_brief_generated_at",
+  "public_result_ready_at",
 ] as const;
 
 const REQUIRED_TENANT_SLUGS = ["private-client", "demo-agent"] as const;
@@ -133,7 +144,7 @@ async function main() {
   console.log("Issues found:\n");
   for (const issue of issues) console.log(`  • ${issue}`);
   console.log(
-    "\nFix: Supabase Dashboard → SQL Editor → run supabase/cloud-bootstrap.sql\n"
+    "\nFix: Supabase Dashboard → SQL Editor → run migrations 017–019 or supabase/cloud-bootstrap.sql\n"
   );
   process.exit(1);
 }

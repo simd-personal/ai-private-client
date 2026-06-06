@@ -82,7 +82,7 @@ export function DecisionGraphPanel({
   }
 
   return (
-    <div ref={ref} className="space-y-6">
+    <div ref={ref} className="space-y-6" data-testid="decision-map-section">
       <ExecutiveDecisionMapHeader
         data={data}
         isAdmin={isAdmin}
@@ -92,12 +92,14 @@ export function DecisionGraphPanel({
 
       {variant === "executive" || !showTechnical ? (
         <>
-          <ExecutiveSummaryCard
-            data={data}
-            isAdmin={isAdmin}
-            displayText={displayText}
-            primaryCoordinationNeed={primaryCoordinationNeed}
-          />
+          {isAdmin ? (
+            <ExecutiveSummaryCard
+              data={data}
+              isAdmin={isAdmin}
+              displayText={displayText}
+              primaryCoordinationNeed={primaryCoordinationNeed}
+            />
+          ) : null}
 
           <div className="hidden lg:grid lg:grid-cols-4 lg:gap-4">
             <DecisionMapColumn
@@ -215,11 +217,14 @@ function ExecutiveDecisionMapHeader({
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-xs font-medium uppercase tracking-[0.2em] text-champagne">
-            {isAdmin ? "Decision Graph" : "Decision Map"}
+            Decision Map
           </p>
           <h3 className="mt-1 font-serif text-2xl text-navy">
             {data.graphTitle || "Private Client Decision Map"}
           </h3>
+          {!isAdmin ? (
+            <p className="mt-1 text-sm text-gray-500">Private Client Decision Map</p>
+          ) : null}
           <p className="mt-2 max-w-3xl text-sm leading-relaxed text-gray-600">
             {displayText(data.centralDecision)}
           </p>

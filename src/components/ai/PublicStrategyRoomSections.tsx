@@ -77,7 +77,7 @@ export function PublicStrategyRoomSections({
         </p>
       </ReportCard>
 
-      <div ref={strategyRef}>
+      <div ref={strategyRef} data-testid="strategy-room-section">
         <StrategyRoomCard data={data.strategyRoom} />
       </div>
 

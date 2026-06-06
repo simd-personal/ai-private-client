@@ -12,17 +12,42 @@ export const DECISION_MAP_STAGE_LABELS: Record<
   execution_preparation: "Execution Preparation",
 };
 
-export function sanitizePublicDecisionText(text: string): string {
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** Replace client-identifying names with "The client" for public decision map copy. */
+export function sanitizePublicDecisionText(
+  text: string,
+  namesToRedact: string[] = []
+): string {
   if (!text.trim()) return text;
 
-  let result = text.replace(
-    /\b[A-Z][a-z]+(?:\s+(?:[A-Z]\.?|[A-Z][a-z]+))+\s+(?=is|was|has|seeks|wants|plans|needs|intends|currently|may|will)\b/g,
+  let result = text;
+
+  for (const name of namesToRedact) {
+    const trimmed = name.trim();
+    if (trimmed.length < 2) continue;
+    const pattern = new RegExp(`\\b${escapeRegExp(trimmed)}\\b`, "gi");
+    result = result.replace(pattern, "The client");
+  }
+
+  result = result.replace(
+    /\b[A-Z][a-z]+(?:\s+(?:[A-Z]\.?|[A-Z][a-z]+))+\s+(?=is|was|has|seeks|wants|plans|needs|intends|currently|may|will|are|would|should)\b/g,
     "The client "
   );
   result = result.replace(
     /\b[A-Z][a-z]+(?:\s+(?:[A-Z]\.?|[A-Z][a-z]+))+'s\b/g,
     "The client's"
   );
+  result = result.replace(
+    /\b[A-Z][a-z]+(?:\s+(?:[A-Z]\.?|[A-Z][a-z]+))+(?=,|\s+a\s+|\s+an\s+)/g,
+    "The client"
+  );
+
+  result = result.replace(/\bThe client('s)?\s+the client\b/gi, "The client$1");
+  result = result.replace(/\bthe client the client\b/gi, "The client");
+
   return result.replace(/\s{2,}/g, " ").trim();
 }
 

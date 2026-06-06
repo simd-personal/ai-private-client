@@ -8,7 +8,6 @@ import {
   ADMIN_SESSION_EXPIRED_EVENT,
   clearAdminToken,
   getAdminToken,
-  hasAdminToken,
   setAdminToken,
 } from "@/lib/admin/admin-session";
 
@@ -25,7 +24,7 @@ export function AdminAuthGate({
 }: AdminAuthGateProps) {
   const [inputPassword, setInputPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [checkingSession, setCheckingSession] = useState(() => hasAdminToken());
+  const [checkingSession, setCheckingSession] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [authenticated, setAuthenticated] = useState(false);
 
@@ -62,7 +61,8 @@ export function AdminAuthGate({
     const token = getAdminToken();
     if (!token) return;
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- restore saved admin session
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- check stored token after mount
+    setCheckingSession(true);
     void verifyToken(token).finally(() => {
       setCheckingSession(false);
     });

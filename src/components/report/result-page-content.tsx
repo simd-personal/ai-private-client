@@ -26,6 +26,7 @@ import {
 } from "@/lib/seller/seller-tier";
 import type { SellerQuizData } from "@/lib/schemas/quiz";
 import type { PublicDecisionLayerData } from "@/lib/schemas/decision-layer";
+import type { FastPublicBrief } from "@/lib/schemas/fast-public-brief";
 import type { PublicGenerationStatus } from "@/lib/schemas/lead-generation";
 import type { PublicStrategyRoomData } from "@/lib/schemas/ai-strategy-room";
 import { ResultGenerationProgress } from "@/components/report/result-generation-progress";
@@ -41,6 +42,9 @@ import { tenantPathFromPathname } from "@/lib/tenants/tenant-paths";
 
 interface ResultApiResponse {
   leadType: "buyer" | "seller" | "equity" | "wealth_forecast";
+  isFastBrief?: boolean;
+  publicResultReady?: boolean;
+  fastBrief?: FastPublicBrief | null;
   report:
     | PublicBuyerReport
     | PublicSellerReport
@@ -52,6 +56,48 @@ interface ResultApiResponse {
   generation?: PublicGenerationStatus;
   createdAt: string;
   sellerEstimatedValueRange?: string;
+}
+
+function FastBriefSection({ brief }: { brief: FastPublicBrief }) {
+  return (
+    <div className="space-y-6" data-testid="fast-public-brief">
+      <ReportCard title="Executive Summary">
+        <p className="leading-relaxed text-gray-700">{brief.executiveSummary}</p>
+      </ReportCard>
+
+      <ReportCard title="Client Objective">
+        <p className="leading-relaxed text-gray-700">{brief.clientObjective}</p>
+      </ReportCard>
+
+      <ReportCard title="Known Facts">
+        <ul className="list-disc space-y-2 pl-5 text-gray-700">
+          {brief.knownFacts.map((fact) => (
+            <li key={fact}>{fact}</li>
+          ))}
+        </ul>
+      </ReportCard>
+
+      <ReportCard title="Items to Clarify">
+        <ul className="list-disc space-y-2 pl-5 text-gray-700">
+          {brief.itemsToClarify.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      </ReportCard>
+
+      <ReportCard title="Advisor Review Topics">
+        <ul className="list-disc space-y-2 pl-5 text-gray-700">
+          {brief.advisorReviewTopics.map((topic) => (
+            <li key={topic}>{topic}</li>
+          ))}
+        </ul>
+      </ReportCard>
+
+      <ReportCard title="Recommended Next Step">
+        <p className="leading-relaxed text-gray-700">{brief.recommendedNextStep}</p>
+      </ReportCard>
+    </div>
+  );
 }
 
 function CopyPrivateLink({ token }: { token: string }) {
@@ -505,6 +551,7 @@ function ResultByToken({ token }: { token: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [progressDismissed, setProgressDismissed] = useState(false);
+  const [pollStartedAt] = useState(() => Date.now());
 
   const fetchResult = async () => {
     const res = await fetch(`/api/leads/result/${encodeURIComponent(token)}`);
@@ -606,48 +653,52 @@ function ResultByToken({ token }: { token: string }) {
     !progressDismissed;
 
   const hasReport = data.report != null;
+  const hasFastBrief = Boolean(data.isFastBrief && data.fastBrief);
   const hasPartialContent =
     hasReport ||
+    hasFastBrief ||
     Boolean(data.strategyRoom?.strategyRoom) ||
     Boolean(data.decisionLayer?.decisionGraph);
+
+  const pageTitle = hasReport
+    ? (data.report as PublicBuyerReport).reportTitle
+    : hasFastBrief
+      ? data.fastBrief!.reportTitle
+      : "Private Client Brief";
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className="mx-auto max-w-2xl px-6 py-12"
+      data-testid="public-result-page"
     >
       {showProgress && generationStatus ? (
         <ResultGenerationProgress
           status={generationStatus}
           showContinue={hasPartialContent}
           onContinue={() => setProgressDismissed(true)}
+          startedAt={pollStartedAt}
         />
       ) : null}
 
-      {hasReport ? (
-        <>
-          <p className="mb-2 text-xs tracking-[0.2em] text-champagne uppercase">
-            Your Private Plan
+      <div className="mb-8">
+        <p className="mb-2 text-xs tracking-[0.2em] text-champagne uppercase">
+          {hasFastBrief && !hasReport ? "Initial Private Brief" : "Your Private Plan"}
+        </p>
+        <h1 className="font-serif text-3xl text-navy md:text-4xl">{pageTitle}</h1>
+        {hasFastBrief && !hasReport ? (
+          <p className="mt-3 text-sm text-gray-600">
+            Your private decision workspace is ready. Deeper advisor coordination
+            sections will appear below as they become available.
           </p>
-          <h1 className="mb-8 font-serif text-3xl text-navy md:text-4xl">
-            {(data.report as PublicBuyerReport).reportTitle}
-          </h1>
-        </>
-      ) : (
-        <div className="mb-8">
-          <p className="mb-2 text-xs tracking-[0.2em] text-champagne uppercase">
-            Your Private Plan
-          </p>
-          <h1 className="font-serif text-3xl text-navy md:text-4xl">
-            Private Client Brief
-          </h1>
+        ) : !hasReport ? (
           <p className="mt-3 text-sm text-gray-600">
             Your base report is still being prepared. Additional sections will
             appear below as they become ready.
           </p>
-        </div>
-      )}
+        ) : null}
+      </div>
 
       <div className="mb-8 space-y-6">
         {hasReport ? (
@@ -665,6 +716,8 @@ function ResultByToken({ token }: { token: string }) {
               report={data.report as PublicWealthForecastReport}
             />
           )
+        ) : hasFastBrief && data.fastBrief ? (
+          <FastBriefSection brief={data.fastBrief} />
         ) : null}
 
         <PublicStrategyRoomSections
@@ -674,7 +727,7 @@ function ResultByToken({ token }: { token: string }) {
             hasReport
               ? (data.report as { recommendedNextStep?: string })
                   .recommendedNextStep
-              : undefined
+              : data.fastBrief?.recommendedNextStep
           }
         />
       </div>

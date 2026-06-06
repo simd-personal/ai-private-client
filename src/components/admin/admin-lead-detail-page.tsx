@@ -130,12 +130,14 @@ function AdminLeadDetailContent({
         </div>
       }
     >
-      <AdminLeadTable
-        leads={[lead]}
-        leadJourneys={leadJourney ? { [lead.id]: leadJourney } : {}}
-        onRefresh={() => void fetchLead()}
-        tenantSlug={tenantSlug}
-      />
+      <div data-testid="admin-lead-page">
+        <AdminLeadTable
+          leads={[lead]}
+          leadJourneys={leadJourney ? { [lead.id]: leadJourney } : {}}
+          onRefresh={() => void fetchLead()}
+          tenantSlug={tenantSlug}
+        />
+      </div>
     </AdminPageShell>
   );
 }

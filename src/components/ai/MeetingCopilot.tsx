@@ -60,7 +60,7 @@ export function MeetingCopilot({ leadId }: MeetingCopilotProps) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-testid="meeting-copilot">
       <ReportCard title="Meeting Copilot">
         <p className="mb-4 text-sm text-gray-600">
           Paste meeting notes or transcript excerpts. The system will extract

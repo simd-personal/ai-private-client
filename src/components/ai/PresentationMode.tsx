@@ -41,7 +41,7 @@ export function PresentationModeViewer({
   if (!slide) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-navy print:relative print:bg-white">
+    <div className="fixed inset-0 z-50 flex flex-col bg-navy print:relative print:bg-white" data-testid="presentation-page">
       <div className="flex items-center justify-between border-b border-white/10 px-6 py-4 print:hidden">
         <span className="text-sm text-champagne">
           Slide {slide.slideNumber} of {slides.length}
@@ -53,6 +53,7 @@ export function PresentationModeViewer({
             onClick={goPrev}
             disabled={index === 0}
             className="text-white hover:bg-white/10"
+            data-testid="presentation-prev-button"
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
@@ -62,6 +63,7 @@ export function PresentationModeViewer({
             onClick={goNext}
             disabled={index === slides.length - 1}
             className="text-white hover:bg-white/10"
+            data-testid="presentation-next-button"
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
@@ -79,7 +81,7 @@ export function PresentationModeViewer({
       </div>
 
       <div className="flex flex-1 flex-col items-center justify-center p-8 print:p-12">
-        <div className="w-full max-w-3xl rounded-2xl border border-champagne/20 bg-[#faf9f7] p-10 shadow-2xl print:border-gray-200 print:shadow-none">
+        <div className="w-full max-w-3xl rounded-2xl border border-champagne/20 bg-[#faf9f7] p-10 shadow-2xl print:border-gray-200 print:shadow-none" data-testid="presentation-slide">
           <p className="mb-2 text-xs uppercase tracking-widest text-champagne print:text-gray-400">
             Private Client Property Desk
           </p>

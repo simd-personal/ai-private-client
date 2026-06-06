@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { sanitizePublicDecisionText } from "@/lib/decision/decision-map-utils";
 import {
   parseAdvisorActionBoard,
   toPublicAdvisorActionBoard,
@@ -298,10 +299,19 @@ export function parseDecisionField<T>(
 }
 
 export function toPublicDecisionGraph(
-  graph: DecisionGraph | null
+  graph: DecisionGraph | null,
+  options?: { namesToRedact?: string[] }
 ): PublicDecisionGraph | null {
   if (!graph) return null;
-  const publicNodes = graph.nodes.filter((n) => n.visibility === "public");
+  const redact = (text: string) =>
+    sanitizePublicDecisionText(text, options?.namesToRedact ?? []);
+  const publicNodes = graph.nodes
+    .filter((n) => n.visibility === "public")
+    .map((node) => ({
+      ...node,
+      label: redact(node.label),
+      description: redact(node.description),
+    }));
   const publicNodeIds = new Set(publicNodes.map((n) => n.id));
   const {
     decisionBlockers: _blockers,
@@ -314,11 +324,23 @@ export function toPublicDecisionGraph(
 
   return {
     ...rest,
+    centralDecision: redact(graph.centralDecision),
+    clientSafeSummary: redact(graph.clientSafeSummary),
+    graphTitle: graph.graphTitle ? redact(graph.graphTitle) : graph.graphTitle,
     nodes: publicNodes,
     edges: graph.edges.filter(
       (e) => publicNodeIds.has(e.from) && publicNodeIds.has(e.to)
     ),
-    nextBestPath: nextBestPath.map(({ adminSummary: _stepAdmin, ...step }) => step),
+    nextBestPath: nextBestPath.map(
+      ({ adminSummary: _stepAdmin, clientSafeSummary, title, ...step }) => {
+        void _stepAdmin;
+        return {
+          ...step,
+          title: redact(title),
+          clientSafeSummary: redact(clientSafeSummary),
+        };
+      }
+    ),
   };
 }
 
@@ -342,14 +364,18 @@ export interface AdminDecisionLayerData extends Omit<
   advisorActionBoardStale: boolean;
 }
 
-export function toPublicDecisionLayerData(lead: {
-  ai_decision_graph?: unknown;
-  ai_advisor_action_board?: unknown;
-}, dataRoomItems: DataRoomItem[] = []): PublicDecisionLayerData {
+export function toPublicDecisionLayerData(
+  lead: {
+    ai_decision_graph?: unknown;
+    ai_advisor_action_board?: unknown;
+  },
+  dataRoomItems: DataRoomItem[] = [],
+  options?: { namesToRedact?: string[] }
+): PublicDecisionLayerData {
   const graph = parseDecisionField(decisionGraphSchema, lead.ai_decision_graph);
   const board = parseAdvisorActionBoard(lead.ai_advisor_action_board);
   return {
-    decisionGraph: toPublicDecisionGraph(graph),
+    decisionGraph: toPublicDecisionGraph(graph, options),
     dataRoomItems: dataRoomItems
       .filter((i) => i.visibility === "public")
       .map(toPublicDataRoomItem),

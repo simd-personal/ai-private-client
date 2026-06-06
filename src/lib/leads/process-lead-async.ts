@@ -1,5 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { recordIntakeDecisionVersion } from "@/lib/ai/persistDecisionLayer";
+import type { LeadType } from "@/lib/ai/intake-context";
+import { logGenerationTiming } from "@/lib/ai/generation-timing";
+import { buildFastPublicBrief } from "@/lib/report/buildFastPublicBrief";
 import type { LeadApiRequest } from "@/lib/schemas/lead-api";
 import { initialGenerationColumns } from "@/lib/schemas/lead-generation";
 import type {
@@ -21,6 +24,7 @@ import {
 } from "@/lib/schemas/test-lead-metadata";
 import { withTenantQuizDataMarkers } from "@/lib/tenants/tenant-config";
 import type { AttributionData } from "@/lib/schemas/attribution";
+import { insertLeadRow } from "@/lib/leads/public-result-query";
 import type { ProcessLeadContext, ProcessLeadResult } from "@/lib/leads/process-submission";
 
 function attributionColumns(attribution?: AttributionData) {
@@ -52,13 +56,34 @@ async function insertFastLead(
   supabase: SupabaseClient,
   row: Record<string, unknown>
 ): Promise<string> {
-  const { data, error } = await supabase
-    .from("leads")
-    .insert(row)
-    .select("id")
-    .single();
-  if (error || !data) throw new Error(error?.message ?? "Insert failed");
-  return data.id as string;
+  const start = Date.now();
+  const leadId = await insertLeadRow(supabase, row);
+  logGenerationTiming("lead_insert", { durationMs: Date.now() - start });
+  return leadId;
+}
+
+function fastBriefPayload(input: {
+  leadType: LeadType;
+  quizData: Record<string, unknown>;
+  tenant: ProcessLeadContext["tenant"];
+  firstName: string;
+  lastName: string;
+}) {
+  const start = Date.now();
+  const brief = buildFastPublicBrief({
+    leadType: input.leadType,
+    quizData: input.quizData as Parameters<typeof buildFastPublicBrief>[0]["quizData"],
+    tenant: input.tenant,
+    firstName: input.firstName,
+    lastName: input.lastName,
+  });
+  const now = new Date().toISOString();
+  logGenerationTiming("fast_public_brief", { durationMs: Date.now() - start });
+  return {
+    fast_public_brief: brief,
+    fast_public_brief_generated_at: now,
+    public_result_ready_at: now,
+  };
 }
 
 export async function processLeadSubmissionAsync(
@@ -122,6 +147,13 @@ export async function processLeadSubmissionAsync(
       lead_score: leadScore,
       lead_temperature: leadTemperature,
       ...commonInsert,
+      ...fastBriefPayload({
+        leadType: "buyer",
+        quizData: storedQuizData,
+        tenant,
+        firstName: quizData.contact.firstName,
+        lastName: quizData.contact.lastName,
+      }),
     });
 
     await recordIntakeDecisionVersion(db, leadId, tenantId);
@@ -202,6 +234,13 @@ export async function processLeadSubmissionAsync(
       lead_score: leadScore,
       lead_temperature: leadTemperature,
       ...commonInsert,
+      ...fastBriefPayload({
+        leadType: "seller",
+        quizData: storedQuizData,
+        tenant,
+        firstName: quizData.contact.firstName,
+        lastName: quizData.contact.lastName,
+      }),
     });
 
     await recordIntakeDecisionVersion(db, leadId, tenantId);
@@ -265,6 +304,13 @@ export async function processLeadSubmissionAsync(
       lead_score: leadScore,
       lead_temperature: leadTemperature,
       ...commonInsert,
+      ...fastBriefPayload({
+        leadType: "wealth_forecast",
+        quizData: storedQuizData,
+        tenant,
+        firstName: quizData.contact.firstName,
+        lastName: quizData.contact.lastName,
+      }),
     });
 
     await recordIntakeDecisionVersion(db, leadId, tenantId);
@@ -340,6 +386,13 @@ export async function processLeadSubmissionAsync(
     lead_score: leadScore,
     lead_temperature: leadTemperature,
     ...commonInsert,
+    ...fastBriefPayload({
+      leadType: "equity",
+      quizData: storedQuizData,
+      tenant,
+      firstName: quizData.contact.firstName,
+      lastName: quizData.contact.lastName,
+    }),
   });
 
   await recordIntakeDecisionVersion(db, leadId, tenantId);

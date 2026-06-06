@@ -8,7 +8,6 @@ import {
   PLATFORM_ADMIN_SESSION_EXPIRED_EVENT,
   clearPlatformAdminToken,
   getPlatformAdminToken,
-  hasPlatformAdminToken,
   setPlatformAdminToken,
 } from "@/lib/platform-admin/session";
 
@@ -25,9 +24,7 @@ export function PlatformAuthGate({
 }: PlatformAuthGateProps) {
   const [inputPassword, setInputPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [checkingSession, setCheckingSession] = useState(() =>
-    hasPlatformAdminToken()
-  );
+  const [checkingSession, setCheckingSession] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [authenticated, setAuthenticated] = useState(false);
 
@@ -66,7 +63,8 @@ export function PlatformAuthGate({
     const token = getPlatformAdminToken();
     if (!token) return;
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- restore saved platform admin session
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- check stored token after mount
+    setCheckingSession(true);
     void verifyToken(token).finally(() => {
       setCheckingSession(false);
     });

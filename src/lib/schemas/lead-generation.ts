@@ -49,6 +49,10 @@ export const publicGenerationStatusSchema = z.object({
   presentationStatus: z.enum(STAGE_STATUSES),
   isReady: z.boolean(),
   isPartiallyReady: z.boolean(),
+  publicResultReady: z.boolean(),
+  isFastBriefReady: z.boolean(),
+  currentPublicStageLabel: z.string(),
+  percentForPublicView: z.number(),
   publicSectionsReady: z.object({
     report: z.boolean(),
     strategyRoom: z.boolean(),
@@ -143,6 +147,65 @@ export function deriveOverallGenerationStatus(input: {
   return "generating";
 }
 
+export function computePublicGenerationPercent(input: {
+  publicResultReady?: boolean | null;
+  base_report_status?: string | null;
+  strategy_room_status?: string | null;
+  decision_layer_status?: string | null;
+  advisor_action_board_status?: string | null;
+  ai_report?: unknown;
+}): number {
+  if (!input.publicResultReady) return 8;
+  if (input.base_report_status === "ready" && input.ai_report != null) {
+    if (input.decision_layer_status === "ready") return 88;
+    if (input.strategy_room_status === "ready") return 68;
+    return 42;
+  }
+  if (input.strategy_room_status === "ready") return 68;
+  if (input.decision_layer_status === "ready") return 88;
+  if (input.advisor_action_board_status === "ready") return 94;
+  return 22;
+}
+
+export function currentPublicStageLabel(input: {
+  public_result_ready_at?: string | null;
+  base_report_status?: string | null;
+  strategy_room_status?: string | null;
+  decision_layer_status?: string | null;
+  advisor_action_board_status?: string | null;
+  presentation_status?: string | null;
+  ai_report?: unknown;
+}): string {
+  if (!input.public_result_ready_at) return "Intake received";
+  if (input.base_report_status !== "ready" || input.ai_report == null) {
+    return "Initial private brief ready";
+  }
+  if (input.strategy_room_status !== "ready") return "Preparing strategy room";
+  if (input.decision_layer_status !== "ready") return "Building decision map";
+  if (input.advisor_action_board_status !== "ready") {
+    return "Creating advisor review plan";
+  }
+  if (input.presentation_status !== "ready") {
+    return "Finalizing presentation view";
+  }
+  return "Brief complete";
+}
+
+function sanitizePublicProgress(
+  progress: GenerationProgress,
+  percentForPublicView: number
+): GenerationProgress {
+  return {
+    percent: percentForPublicView,
+    lastUpdatedAt: progress.lastUpdatedAt,
+    completedStages: progress.completedStages?.filter((stage) =>
+      ["intake", "fast_brief", "base_report", "strategy_room", "decision_layer", "advisor_action_board", "presentation"].includes(
+        stage
+      )
+    ),
+  };
+}
+
 export function buildPublicSectionsReady(lead: {
   base_report_status?: string | null;
   strategy_room_status?: string | null;
@@ -180,6 +243,8 @@ export function toPublicGenerationStatus(lead: {
   decision_layer_status?: string | null;
   advisor_action_board_status?: string | null;
   presentation_status?: string | null;
+  public_result_ready_at?: string | null;
+  fast_public_brief?: unknown;
   ai_strategy_room?: unknown;
   ai_scenario_comparison?: unknown;
   ai_advisor_coordination_map?: unknown;
@@ -192,9 +257,7 @@ export function toPublicGenerationStatus(lead: {
   const progressParsed = generationProgressSchema.safeParse(
     lead.generation_progress ?? {}
   );
-  const generationProgress = progressParsed.success
-    ? progressParsed.data
-    : {};
+  const rawProgress = progressParsed.success ? progressParsed.data : {};
 
   const baseReportStatus = (lead.base_report_status ?? "pending") as StageStatus;
   const strategyRoomStatus = (lead.strategy_room_status ??
@@ -206,9 +269,26 @@ export function toPublicGenerationStatus(lead: {
   const presentationStatus = (lead.presentation_status ??
     "pending") as StageStatus;
 
+  const publicResultReady = Boolean(lead.public_result_ready_at);
+  const isFastBriefReady = publicResultReady && lead.fast_public_brief != null;
+  const percentForPublicView = computePublicGenerationPercent({
+    publicResultReady,
+    base_report_status: lead.base_report_status,
+    strategy_room_status: lead.strategy_room_status,
+    decision_layer_status: lead.decision_layer_status,
+    advisor_action_board_status: lead.advisor_action_board_status,
+    ai_report: lead.ai_report,
+  });
+  const stageLabel = currentPublicStageLabel(lead);
+  const generationProgress = sanitizePublicProgress(
+    rawProgress,
+    percentForPublicView
+  );
+
   const publicSectionsReady = buildPublicSectionsReady(lead);
   const isReady = generationStatus === "complete";
   const isPartiallyReady =
+    isFastBriefReady ||
     generationStatus === "partially_ready" ||
     Object.values(publicSectionsReady).some(Boolean);
 
@@ -222,6 +302,10 @@ export function toPublicGenerationStatus(lead: {
     presentationStatus,
     isReady,
     isPartiallyReady,
+    publicResultReady,
+    isFastBriefReady,
+    currentPublicStageLabel: stageLabel,
+    percentForPublicView,
     publicSectionsReady,
   };
 }

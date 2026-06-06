@@ -63,7 +63,7 @@ export function ComplianceGuardrailsPanel({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-testid="guardrails-panel">
       <ReportCard title="Guardrails Review">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <Badge

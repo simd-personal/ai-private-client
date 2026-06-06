@@ -77,6 +77,7 @@ function MercerDemoContent() {
   }, [fetchStatus]);
 
   return (
+    <div data-testid="platform-demo-page">
     <PlatformPageShell
       title="Mercer Newport Demo"
       subtitle="Aspen to Newport Beach Private Property Transition — example wealth advisory workflow (Demo only; not affiliated with Mercer Advisors)."
@@ -105,18 +106,37 @@ function MercerDemoContent() {
 
       <section className="mb-6 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
         <div className="mb-4 flex flex-wrap gap-2">
-          <Button onClick={() => void resetDemo()} disabled={loading}>
+          <Button
+            onClick={() => void resetDemo()}
+            disabled={loading}
+            data-testid="platform-demo-reset-button"
+          >
             {loading ? "Working…" : "Reset Demo"}
           </Button>
           {status ? (
             <>
-              <a href={status.adminLeadUrl} target="_blank" rel="noreferrer">
+              <a
+                href={status.adminLeadUrl}
+                target="_blank"
+                rel="noreferrer"
+                data-testid="platform-demo-admin-link"
+              >
                 <Button variant="secondary">Open Admin Lead</Button>
               </a>
-              <a href={status.publicResultUrl} target="_blank" rel="noreferrer">
+              <a
+                href={status.publicResultUrl}
+                target="_blank"
+                rel="noreferrer"
+                data-testid="platform-demo-public-link"
+              >
                 <Button variant="secondary">Open Public Result</Button>
               </a>
-              <a href={status.presentationUrl} target="_blank" rel="noreferrer">
+              <a
+                href={status.presentationUrl}
+                target="_blank"
+                rel="noreferrer"
+                data-testid="platform-demo-presentation-link"
+              >
                 <Button variant="secondary">Open Presentation</Button>
               </a>
             </>
@@ -183,6 +203,7 @@ function MercerDemoContent() {
         </section>
       ) : null}
     </PlatformPageShell>
+    </div>
   );
 }
 

@@ -17,7 +17,25 @@
     "verify:public-safety": "tsx scripts/verify-public-safety.ts",
     "seed:prod-leads": "tsx scripts/seed_production_test_leads.ts",
     "seed:prod-leads:cleanup": "tsx scripts/delete_production_test_leads.ts",
-    "test:prod-seller": "tsx scripts/test_production_seller_lead.ts"
+    "test:prod-seller": "tsx scripts/test_production_seller_lead.ts",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:report": "playwright show-report",
+    "test:prod": "playwright test tests/e2e/prod-smoke.spec.ts",
+    "test:prod:headed": "playwright test tests/e2e/prod-smoke.spec.ts --headed",
+    "test:prod:safety": "playwright test tests/e2e/public-safety.spec.ts",
+    "test:prod:presentation": "playwright test tests/e2e/presentation.spec.ts",
+    "test:prod:admin": "playwright test tests/e2e/admin-lead-tabs.spec.ts",
+    "test:prod:visual": "playwright test tests/e2e/visual-smoke.spec.ts",
+    "test:local": "playwright test tests/e2e/prod-smoke.spec.ts",
+    "pretest:local": "playwright install chromium",
+    "pretest:e2e": "playwright install chromium",
+    "pretest:prod": "playwright install chromium",
+    "test:e2e:install": "playwright install chromium",
+    "check": "npm run lint && npm run build",
+    "check:demo": "npm run supabase:verify && npm run demo:mercer && npm run verify:public-safety -- mercer-newport-demo",
+    "check:ai": "npm run ai:test -- private-client.demo"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
@@ -36,6 +54,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

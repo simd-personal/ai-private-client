@@ -203,7 +203,7 @@ export function AdvisorActionBoardPublic({
   }
 
   return (
-    <div ref={ref} className="space-y-4">
+    <div ref={ref} className="space-y-4" data-testid="advisor-review-plan-section">
       <ReportCard title="Advisor Review Plan">
         <p className="leading-relaxed text-gray-700">{board.clientSafeSummary}</p>
       </ReportCard>

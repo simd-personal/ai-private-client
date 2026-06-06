@@ -73,6 +73,10 @@ const FORBIDDEN_KEYS = [
   "admin_notes",
   "generation_error",
   "generation_progress",
+  "fast_public_brief_generated_at",
+  "public_result_ready_at",
+  "failedStages",
+  "currentStage",
 ] as const;
 
 const REQUIRED_PUBLIC_SECTIONS = [
@@ -135,7 +139,7 @@ async function buildPublicPayload(token: string) {
   const { data, error } = await supabase
     .from("leads")
     .select(
-      "id, lead_type, ai_report, created_at, quiz_data, ai_strategy_room, ai_scenario_comparison, ai_advisor_coordination_map, ai_relationship_map, ai_red_flags_missing_info, ai_decision_graph, ai_advisor_action_board"
+      "id, lead_type, first_name, last_name, ai_report, created_at, quiz_data, ai_strategy_room, ai_scenario_comparison, ai_advisor_coordination_map, ai_relationship_map, ai_red_flags_missing_info, ai_decision_graph, ai_advisor_action_board"
     )
     .eq("public_result_token", token)
     .single();
@@ -150,10 +154,10 @@ async function buildPublicPayload(token: string) {
     | "equity"
     | "wealth_forecast";
 
-  const report = toPublicReport(
-    leadType,
-    data.ai_report as Record<string, unknown>
-  );
+  const report =
+    data.ai_report != null
+      ? toPublicReport(leadType, data.ai_report as Record<string, unknown>)
+      : null;
   const strategyRoom = toPublicStrategyRoomData(data);
 
   const { data: publicDataRoom } = await supabase
@@ -164,7 +168,13 @@ async function buildPublicPayload(token: string) {
 
   const decisionLayer = toPublicDecisionLayerData(
     data,
-    (publicDataRoom ?? []) as DataRoomItem[]
+    (publicDataRoom ?? []) as DataRoomItem[],
+    {
+      namesToRedact: [
+        String((data as { first_name?: string }).first_name ?? ""),
+        String((data as { last_name?: string }).last_name ?? ""),
+      ].filter(Boolean),
+    }
   );
 
   return {

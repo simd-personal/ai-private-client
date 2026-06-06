@@ -102,7 +102,7 @@ export function DataRoomChecklist({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-testid="data-room-checklist">
       <ReportCard
         title={admin ? "Private Client Data Room" : "Information to Prepare"}
       >

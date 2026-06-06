@@ -48,7 +48,7 @@ export function DecisionTimeline({ leadId }: DecisionTimelineProps) {
 
   return (
     <ReportCard title="Decision Timeline">
-      <ol className="relative space-y-6 border-l border-champagne/40 pl-6">
+      <ol className="relative space-y-6 border-l border-champagne/40 pl-6" data-testid="decision-timeline">
         {versions.map((v) => (
           <li key={v.id} className="relative">
             <span className="absolute -left-[1.65rem] top-1 h-3 w-3 rounded-full border-2 border-champagne bg-white" />

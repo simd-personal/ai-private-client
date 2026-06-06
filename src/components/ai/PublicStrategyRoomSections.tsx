@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { AdvisorActionBoardPublic } from "@/components/ai/AdvisorActionBoard";
 import { AdvisorCoordinationMapPanel } from "@/components/ai/AdvisorCoordinationMap";
 import { DataRoomChecklist } from "@/components/ai/DataRoomChecklist";
 import { DecisionGraphPanel } from "@/components/ai/DecisionGraph";
@@ -92,8 +93,18 @@ export function PublicStrategyRoomSections({
         </div>
       )}
 
-      {decisionLayer?.decisionGraph && (
-        <DecisionGraphPanel data={decisionLayer.decisionGraph} />
+      {decisionLayer?.decisionGraph ? (
+        <DecisionGraphPanel
+          data={decisionLayer.decisionGraph}
+          mode="public"
+          primaryCoordinationNeed={data.strategyRoom.primaryCoordinationNeed}
+        />
+      ) : (
+        <DecisionGraphPanel data={null} mode="public" />
+      )}
+
+      {decisionLayer?.advisorActionBoard && (
+        <AdvisorActionBoardPublic board={decisionLayer.advisorActionBoard} />
       )}
 
       {decisionLayer && decisionLayer.dataRoomItems.length > 0 && (

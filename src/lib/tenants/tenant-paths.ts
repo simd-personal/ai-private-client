@@ -19,3 +19,13 @@ export function appendTenantQuery(path: string, tenantSlug?: string | null): str
   const joiner = path.includes("?") ? "&" : "?";
   return `${path}${joiner}tenant=${encodeURIComponent(tenantSlug)}`;
 }
+
+export function buildTenantResultUrl(
+  tenantSlug: string | null | undefined,
+  token: string,
+  siteUrl: string
+): string {
+  const base = siteUrl.replace(/\/$/, "");
+  const path = buildTenantPath("/result", tenantSlug);
+  return `${base}${path}?token=${encodeURIComponent(token)}`;
+}

@@ -157,6 +157,26 @@ function MercerDemoContent() {
             value={String(status.dataRoomItemCount)}
           />
           <StatusTile label="Decision stage" value={status.decisionStage ?? "—"} />
+          <StatusTile
+            label="Action board lanes"
+            value={String(status.actionBoardLaneCount ?? 0)}
+          />
+          <StatusTile
+            label="Action board blockers"
+            value={String(status.actionBoardBlockerCount ?? 0)}
+          />
+          <StatusTile
+            label="Next best path steps"
+            value={String(status.actionBoardNextBestPathCount ?? 0)}
+          />
+          <StatusTile
+            label="Action items"
+            value={String(status.actionBoardActionItemCount ?? 0)}
+          />
+          <StatusTile
+            label="Board stale"
+            value={status.actionBoardStale ? "yes" : "no"}
+          />
           <StatusTile label="AI source" value={status.aiGenerationSource ?? "—"} />
           <StatusTile label="AI model" value={status.aiGenerationModel ?? "—"} />
           <StatusTile label="Tenant slug" value={status.tenantSlug} />

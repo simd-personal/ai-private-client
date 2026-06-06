@@ -772,3 +772,152 @@ set
   file_size_limit = excluded.file_size_limit,
   allowed_mime_types = excluded.allowed_mime_types;
 
+-- ========== 016_data_room_upload_document_summary.sql ==========
+-- Data Room document upload summary fields (admin-only)
+
+alter table public.decision_data_room_items
+  add column if not exists ai_document_summary jsonb,
+  add column if not exists ai_document_summary_generated_at timestamptz,
+  add column if not exists ai_document_summary_source text,
+  add column if not exists ai_document_summary_model text;
+
+-- ========== 017_advisor_action_board.sql ==========
+-- Advisor Action Intelligence Board — lead columns + action items table
+
+alter table public.leads
+  add column if not exists ai_advisor_action_board jsonb,
+  add column if not exists ai_advisor_action_board_generated_at timestamptz,
+  add column if not exists ai_advisor_action_board_source text,
+  add column if not exists ai_advisor_action_board_model text,
+  add column if not exists ai_advisor_action_board_stale boolean default false;
+
+create table if not exists public.advisor_action_items (
+  id uuid primary key default gen_random_uuid(),
+  tenant_id uuid references public.tenants(id) on delete cascade,
+  lead_id uuid not null references public.leads(id) on delete cascade,
+  lane_role text not null,
+  title text not null,
+  description text,
+  status text not null default 'open',
+  priority text not null default 'medium',
+  owner_name text,
+  owner_role text,
+  due_date timestamptz,
+  related_data_room_item_id uuid references public.decision_data_room_items(id) on delete set null,
+  client_visible boolean not null default false,
+  admin_notes text,
+  created_by text,
+  completed_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint advisor_action_items_status_check
+    check (status in (
+      'open',
+      'in_progress',
+      'waiting_on_client',
+      'waiting_on_advisor',
+      'complete',
+      'not_needed'
+    )),
+  constraint advisor_action_items_priority_check
+    check (priority in ('low', 'medium', 'high'))
+);
+
+create index if not exists advisor_action_items_lead_id_idx
+  on public.advisor_action_items (lead_id);
+
+create index if not exists advisor_action_items_tenant_id_idx
+  on public.advisor_action_items (tenant_id);
+
+alter table public.advisor_action_items enable row level security;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public'
+      and tablename = 'advisor_action_items'
+      and policyname = 'No public access to advisor_action_items'
+  ) then
+    create policy "No public access to advisor_action_items"
+      on public.advisor_action_items
+      for all
+      using (false);
+  end if;
+end $$;
+
+
+-- ========== 018_async_lead_generation_status.sql ==========
+-- Async lead generation status tracking
+
+alter table public.leads
+  add column if not exists generation_status text default 'intake_received',
+  add column if not exists generation_started_at timestamptz,
+  add column if not exists generation_completed_at timestamptz,
+  add column if not exists generation_error text,
+  add column if not exists generation_progress jsonb default '{}'::jsonb,
+  add column if not exists base_report_status text default 'pending',
+  add column if not exists strategy_room_status text default 'pending',
+  add column if not exists decision_layer_status text default 'pending',
+  add column if not exists advisor_action_board_status text default 'pending',
+  add column if not exists presentation_status text default 'pending';
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'leads_generation_status_check'
+  ) then
+    alter table public.leads
+      add constraint leads_generation_status_check
+      check (generation_status in (
+        'intake_received',
+        'generating',
+        'partially_ready',
+        'complete',
+        'failed'
+      ));
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint where conname = 'leads_base_report_status_check'
+  ) then
+    alter table public.leads
+      add constraint leads_base_report_status_check
+      check (base_report_status in ('pending', 'running', 'ready', 'failed', 'skipped'));
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint where conname = 'leads_strategy_room_status_check'
+  ) then
+    alter table public.leads
+      add constraint leads_strategy_room_status_check
+      check (strategy_room_status in ('pending', 'running', 'ready', 'failed', 'skipped'));
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint where conname = 'leads_decision_layer_status_check'
+  ) then
+    alter table public.leads
+      add constraint leads_decision_layer_status_check
+      check (decision_layer_status in ('pending', 'running', 'ready', 'failed', 'skipped'));
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint where conname = 'leads_advisor_action_board_status_check'
+  ) then
+    alter table public.leads
+      add constraint leads_advisor_action_board_status_check
+      check (advisor_action_board_status in ('pending', 'running', 'ready', 'failed', 'skipped'));
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint where conname = 'leads_presentation_status_check'
+  ) then
+    alter table public.leads
+      add constraint leads_presentation_status_check
+      check (presentation_status in ('pending', 'running', 'ready', 'failed', 'skipped'));
+  end if;
+end $$;
+
+create index if not exists leads_generation_status_idx
+  on public.leads (generation_status);

@@ -26,7 +26,9 @@ import {
 } from "@/lib/seller/seller-tier";
 import type { SellerQuizData } from "@/lib/schemas/quiz";
 import type { PublicDecisionLayerData } from "@/lib/schemas/decision-layer";
+import type { PublicGenerationStatus } from "@/lib/schemas/lead-generation";
 import type { PublicStrategyRoomData } from "@/lib/schemas/ai-strategy-room";
+import { ResultGenerationProgress } from "@/components/report/result-generation-progress";
 import {
   getQuestionsForAdvisor,
 } from "@/lib/schemas/ai-report";
@@ -43,9 +45,11 @@ interface ResultApiResponse {
     | PublicBuyerReport
     | PublicSellerReport
     | PublicEquityMoveReport
-    | PublicWealthForecastReport;
+    | PublicWealthForecastReport
+    | null;
   strategyRoom?: PublicStrategyRoomData | null;
   decisionLayer?: PublicDecisionLayerData | null;
+  generation?: PublicGenerationStatus;
   createdAt: string;
   sellerEstimatedValueRange?: string;
 }
@@ -496,48 +500,97 @@ function ReportNotFound() {
 function ResultByToken({ token }: { token: string }) {
   const pathname = usePathname();
   const [data, setData] = useState<ResultApiResponse | null>(null);
+  const [generationStatus, setGenerationStatus] =
+    useState<PublicGenerationStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [progressDismissed, setProgressDismissed] = useState(false);
+
+  const fetchResult = async () => {
+    const res = await fetch(`/api/leads/result/${encodeURIComponent(token)}`);
+    const json = await res.json();
+    if (!res.ok) {
+      throw new Error("not_found");
+    }
+    return json as ResultApiResponse;
+  };
+
+  const fetchStatus = async () => {
+    const res = await fetch(
+      `/api/leads/result/${encodeURIComponent(token)}/status`
+    );
+    if (!res.ok) return null;
+    return (await res.json()) as PublicGenerationStatus;
+  };
 
   useEffect(() => {
     let cancelled = false;
+    let pollTimer: ReturnType<typeof setInterval> | null = null;
 
-    async function fetchReport() {
+    async function load() {
       try {
-        const res = await fetch(`/api/leads/result/${encodeURIComponent(token)}`);
-        const json = await res.json();
+        const [resultJson, statusJson] = await Promise.all([
+          fetchResult(),
+          fetchStatus(),
+        ]);
 
-        if (!res.ok) {
-          if (!cancelled) {
-            setError("not_found");
-            setLoading(false);
-          }
-          return;
-        }
+        if (cancelled) return;
 
-        if (!cancelled) {
-          setData(json as ResultApiResponse);
-          setLoading(false);
-          trackReportViewed({ token, leadType: json.leadType });
+        setData(resultJson);
+        setGenerationStatus(statusJson ?? resultJson.generation ?? null);
+        setLoading(false);
+        trackReportViewed({ token, leadType: resultJson.leadType });
+
+        const done =
+          statusJson?.isReady ||
+          statusJson?.generationStatus === "complete" ||
+          statusJson?.generationStatus === "failed";
+
+        if (!done) {
+          pollTimer = setInterval(() => {
+            void (async () => {
+              try {
+                const [nextResult, nextStatus] = await Promise.all([
+                  fetchResult(),
+                  fetchStatus(),
+                ]);
+                if (cancelled) return;
+                setData(nextResult);
+                setGenerationStatus(nextStatus ?? nextResult.generation ?? null);
+
+                if (
+                  nextStatus?.isReady ||
+                  nextStatus?.generationStatus === "complete" ||
+                  nextStatus?.generationStatus === "failed"
+                ) {
+                  if (pollTimer) clearInterval(pollTimer);
+                }
+              } catch {
+                /* keep polling */
+              }
+            })();
+          }, 2500);
         }
       } catch {
         if (!cancelled) {
-          setError("fetch_error");
+          setError("not_found");
           setLoading(false);
         }
       }
     }
 
-    fetchReport();
+    void load();
+
     return () => {
       cancelled = true;
+      if (pollTimer) clearInterval(pollTimer);
     };
   }, [token]);
 
   if (loading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center text-gray-400">
-        Loading your plan...
+        Opening your private brief workspace...
       </div>
     );
   }
@@ -546,40 +599,82 @@ function ResultByToken({ token }: { token: string }) {
     return <ReportNotFound />;
   }
 
+  const showProgress =
+    generationStatus &&
+    !generationStatus.isReady &&
+    generationStatus.generationStatus !== "complete" &&
+    !progressDismissed;
+
+  const hasReport = data.report != null;
+  const hasPartialContent =
+    hasReport ||
+    Boolean(data.strategyRoom?.strategyRoom) ||
+    Boolean(data.decisionLayer?.decisionGraph);
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className="mx-auto max-w-2xl px-6 py-12"
     >
-      <p className="mb-2 text-xs tracking-[0.2em] text-champagne uppercase">
-        Your Private Plan
-      </p>
-      <h1 className="mb-8 font-serif text-3xl text-navy md:text-4xl">
-        {data.report.reportTitle}
-      </h1>
+      {showProgress && generationStatus ? (
+        <ResultGenerationProgress
+          status={generationStatus}
+          showContinue={hasPartialContent}
+          onContinue={() => setProgressDismissed(true)}
+        />
+      ) : null}
+
+      {hasReport ? (
+        <>
+          <p className="mb-2 text-xs tracking-[0.2em] text-champagne uppercase">
+            Your Private Plan
+          </p>
+          <h1 className="mb-8 font-serif text-3xl text-navy md:text-4xl">
+            {(data.report as PublicBuyerReport).reportTitle}
+          </h1>
+        </>
+      ) : (
+        <div className="mb-8">
+          <p className="mb-2 text-xs tracking-[0.2em] text-champagne uppercase">
+            Your Private Plan
+          </p>
+          <h1 className="font-serif text-3xl text-navy md:text-4xl">
+            Private Client Brief
+          </h1>
+          <p className="mt-3 text-sm text-gray-600">
+            Your base report is still being prepared. Additional sections will
+            appear below as they become ready.
+          </p>
+        </div>
+      )}
 
       <div className="mb-8 space-y-6">
-        {data.leadType === "buyer" ? (
-          <BuyerReportView report={data.report as PublicBuyerReport} />
-        ) : data.leadType === "seller" ? (
-          <SellerReportView
-            report={data.report as PublicSellerReport}
-            estimatedValueRange={data.sellerEstimatedValueRange}
-          />
-        ) : data.leadType === "equity" ? (
-          <EquityReportView report={data.report as PublicEquityMoveReport} />
-        ) : (
-          <WealthForecastReportView
-            report={data.report as PublicWealthForecastReport}
-          />
-        )}
+        {hasReport ? (
+          data.leadType === "buyer" ? (
+            <BuyerReportView report={data.report as PublicBuyerReport} />
+          ) : data.leadType === "seller" ? (
+            <SellerReportView
+              report={data.report as PublicSellerReport}
+              estimatedValueRange={data.sellerEstimatedValueRange}
+            />
+          ) : data.leadType === "equity" ? (
+            <EquityReportView report={data.report as PublicEquityMoveReport} />
+          ) : (
+            <WealthForecastReportView
+              report={data.report as PublicWealthForecastReport}
+            />
+          )
+        ) : null}
 
         <PublicStrategyRoomSections
           data={data.strategyRoom ?? null}
           decisionLayer={data.decisionLayer ?? null}
           recommendedNextStep={
-            (data.report as { recommendedNextStep?: string }).recommendedNextStep
+            hasReport
+              ? (data.report as { recommendedNextStep?: string })
+                  .recommendedNextStep
+              : undefined
           }
         />
       </div>

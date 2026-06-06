@@ -2,23 +2,30 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { verifyAdmin } from "@/lib/admin/verify-admin";
 import { fetchTenantScopedLead } from "@/lib/admin/lead-comments";
-import { recordDataRoomEvent } from "@/lib/data-room/recordDataRoomEvent";
-import { markAdvisorActionBoardStale } from "@/lib/ai/persistAdvisorActionBoard";
+import { advisorActionItemSchema } from "@/lib/schemas/advisor-action-board";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { resolveTenantFromRequest } from "@/lib/tenants/tenant-resolver";
 
 const patchSchema = z.object({
-  category: z.string().optional(),
-  item_name: z.string().optional(),
+  title: z.string().optional(),
   description: z.string().nullable().optional(),
-  requested_from: z.string().nullable().optional(),
-  advisor_owner: z.string().nullable().optional(),
   status: z
-    .enum(["not_requested", "requested", "received", "reviewed", "not_needed"])
+    .enum([
+      "open",
+      "in_progress",
+      "waiting_on_client",
+      "waiting_on_advisor",
+      "complete",
+      "not_needed",
+    ])
     .optional(),
   priority: z.enum(["low", "medium", "high"]).optional(),
-  visibility: z.enum(["public", "admin"]).optional(),
+  owner_name: z.string().nullable().optional(),
+  owner_role: z.string().nullable().optional(),
   due_date: z.string().nullable().optional(),
+  related_data_room_item_id: z.string().uuid().nullable().optional(),
+  client_visible: z.boolean().optional(),
+  admin_notes: z.string().nullable().optional(),
 });
 
 export async function PATCH(
@@ -38,22 +45,22 @@ export async function PATCH(
       leadId,
       resolvedTenant.tenantId
     );
+
     if (!lead) {
       return NextResponse.json({ error: "Lead not found" }, { status: 404 });
     }
 
     const body = patchSchema.parse(await request.json());
+    const now = new Date().toISOString();
+    const updates: Record<string, unknown> = { ...body, updated_at: now };
 
-    const { data: previousItem } = await supabase
-      .from("decision_data_room_items")
-      .select("status, item_name")
-      .eq("id", itemId)
-      .eq("lead_id", leadId)
-      .maybeSingle();
+    if (body.status === "complete") {
+      updates.completed_at = now;
+    }
 
     const { data, error } = await supabase
-      .from("decision_data_room_items")
-      .update({ ...body, updated_at: new Date().toISOString() })
+      .from("advisor_action_items")
+      .update(updates)
       .eq("id", itemId)
       .eq("lead_id", leadId)
       .select("*")
@@ -63,36 +70,10 @@ export async function PATCH(
       return NextResponse.json({ error: "Item not found" }, { status: 404 });
     }
 
-    let timelineMessage: string | undefined;
-    if (
-      body.status &&
-      body.status !== previousItem?.status &&
-      (body.status === "reviewed" || body.status === "not_needed")
-    ) {
-      timelineMessage =
-        body.status === "reviewed"
-          ? `${data.item_name} marked reviewed.`
-          : `${data.item_name} marked not needed.`;
-    }
-
-    await recordDataRoomEvent(supabase, {
-      tenantId: resolvedTenant.tenantId,
-      leadId,
-      changeSource: "data_room_update",
-      timelineMessage:
-        timelineMessage ?? `${data.item_name} status updated to ${data.status}.`,
-      snapshot: { item: data.item_name, status: data.status },
-    }).catch(() => undefined);
-
-    await markAdvisorActionBoardStale(
-      supabase,
-      leadId,
-      "Data room item updated"
-    ).catch(() => undefined);
-
-    return NextResponse.json({ item: data });
+    const parsed = advisorActionItemSchema.safeParse(data);
+    return NextResponse.json({ item: parsed.success ? parsed.data : data });
   } catch (error) {
-    console.error("[data-room PATCH]", error);
+    console.error("[advisor-action-items PATCH]", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -114,12 +95,13 @@ export async function DELETE(
       leadId,
       resolvedTenant.tenantId
     );
+
     if (!lead) {
       return NextResponse.json({ error: "Lead not found" }, { status: 404 });
     }
 
     const { error } = await supabase
-      .from("decision_data_room_items")
+      .from("advisor_action_items")
       .delete()
       .eq("id", itemId)
       .eq("lead_id", leadId);
@@ -130,7 +112,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("[data-room DELETE]", error);
+    console.error("[advisor-action-items DELETE]", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

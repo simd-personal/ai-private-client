@@ -37,7 +37,7 @@ import {
 } from "@/lib/constants";
 import { isCaliforniaProperty } from "@/lib/schemas/quiz";
 import { isPremiumSellerValue } from "@/lib/seller/seller-tier";
-import { getRedirectDelayMs, postLeadSubmission } from "@/lib/quiz/submit-lead";
+import { postLeadSubmission } from "@/lib/quiz/submit-lead";
 import type { SellerQuizData } from "@/lib/schemas/quiz";
 import { tenantPathFromPathname } from "@/lib/tenants/tenant-paths";
 import { useCurrentTenant } from "@/lib/tenants/current-tenant";
@@ -262,8 +262,6 @@ export function SellerQuiz() {
     });
     trackQuizCompleted("seller", { leadId: result.leadId });
 
-    setLoadingState("complete");
-    await new Promise((resolve) => setTimeout(resolve, getRedirectDelayMs()));
     router.push(
       `${tenantPathFromPathname(pathname, "/result")}?token=${result.token}`
     );
@@ -287,6 +285,7 @@ export function SellerQuiz() {
       <ReportGenerationLoading
         leadType="seller"
         state={loadingState}
+        mode="intake"
         onTryAgain={handleTryAgain}
       />
     );

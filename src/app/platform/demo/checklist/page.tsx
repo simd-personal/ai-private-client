@@ -35,38 +35,43 @@ const CHECKLIST = [
   },
   {
     step: 6,
+    title: "Show Advisor Action Board",
+    detail: "Role-specific advisor lanes, next best path, and coordination blockers.",
+  },
+  {
+    step: 7,
     title: "Show Advisor Coordination Map",
     detail: "CPA, attorney, wealth advisor, lender, and licensed agent review topics.",
   },
   {
-    step: 7,
+    step: 8,
     title: "Open admin",
     detail: "Platform → Reset Demo → Open Admin Lead.",
     href: "/platform/demo",
   },
   {
-    step: 8,
+    step: 9,
     title: "Show Data Room",
     detail: "Private Client Data Room checklist and completion status.",
   },
   {
-    step: 9,
+    step: 10,
     title: "Show Guardrails",
     detail: "Compliance-safe AI review panel and public disclosure preview.",
   },
   {
-    step: 10,
+    step: 11,
     title: "Show Meeting Copilot",
     detail: "Paste meeting notes and generate client-safe follow-up.",
   },
   {
-    step: 11,
+    step: 12,
     title: "Open Presentation Mode",
     detail: "Slide-style walkthrough for live pitch.",
     href: "/platform/demo",
   },
   {
-    step: 12,
+    step: 13,
     title: "End with pilot proposal",
     detail:
       "Position as a private client decision operating layer — demo workflow only, not Mercer affiliation.",

@@ -4,6 +4,7 @@ import {
   generateStrategyRoom,
   strategyRoomToDbColumns,
 } from "@/lib/ai/generateStrategyRoom";
+import { generateAndPersistAdvisorActionBoard } from "@/lib/ai/persistAdvisorActionBoard";
 import { persistDecisionLayer } from "@/lib/ai/persistDecisionLayer";
 import type { LeadType } from "@/lib/ai/intake-context";
 import type {
@@ -43,6 +44,15 @@ export async function generateAndPersistStrategyRoom(
     });
   } catch (decisionError) {
     console.error("[decision-layer] Failed to persist:", decisionError);
+  }
+
+  try {
+    await generateAndPersistAdvisorActionBoard(supabase, leadId, {
+      tenantId: options?.tenantId ?? null,
+      changeSource: options?.changeSource ?? "ai_generated",
+    });
+  } catch (boardError) {
+    console.error("[advisor-action-board] Failed to persist:", boardError);
   }
 }
 

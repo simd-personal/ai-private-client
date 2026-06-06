@@ -188,6 +188,66 @@ export function trackMeetingSummaryGenerated(metadata?: AnalyticsPayload): void 
   void siteEvents.trackSiteEvent("meeting_summary_generated", sanitizeMeta(metadata));
 }
 
+export function trackAdvisorActionBoardViewed(metadata?: AnalyticsPayload): void {
+  dispatch("advisor_action_board_viewed", metadata);
+  void siteEvents.trackSiteEvent("advisor_action_board_viewed", sanitizeMeta(metadata));
+}
+
+export function trackAdvisorActionBoardRegenerated(metadata?: AnalyticsPayload): void {
+  dispatch("advisor_action_board_regenerated", metadata);
+  void siteEvents.trackSiteEvent("advisor_action_board_regenerated", sanitizeMeta(metadata));
+}
+
+export function trackAdvisorActionItemCreated(metadata?: AnalyticsPayload): void {
+  dispatch("advisor_action_item_created", metadata);
+  void siteEvents.trackSiteEvent("advisor_action_item_created", sanitizeMeta(metadata));
+}
+
+export function trackAdvisorActionItemUpdated(metadata?: AnalyticsPayload): void {
+  dispatch("advisor_action_item_updated", metadata);
+  void siteEvents.trackSiteEvent("advisor_action_item_updated", sanitizeMeta(metadata));
+}
+
+export function trackAdvisorActionItemCompleted(metadata?: AnalyticsPayload): void {
+  dispatch("advisor_action_item_completed", metadata);
+  void siteEvents.trackSiteEvent("advisor_action_item_completed", sanitizeMeta(metadata));
+}
+
+export function trackLeadSubmitStarted(metadata?: AnalyticsPayload): void {
+  dispatch("lead_submit_started", metadata);
+  void siteEvents.trackSiteEvent("lead_submit_started", sanitizeMeta(metadata));
+}
+
+export function trackLeadWorkspaceCreated(metadata?: AnalyticsPayload): void {
+  dispatch("lead_workspace_created", metadata);
+  void siteEvents.trackSiteEvent("lead_workspace_created", sanitizeMeta(metadata));
+}
+
+export function trackLeadGenerationStarted(metadata?: AnalyticsPayload): void {
+  dispatch("lead_generation_started", metadata);
+  void siteEvents.trackSiteEvent("lead_generation_started", sanitizeMeta(metadata));
+}
+
+export function trackLeadGenerationStageReady(metadata?: AnalyticsPayload): void {
+  dispatch("lead_generation_stage_ready", metadata);
+  void siteEvents.trackSiteEvent("lead_generation_stage_ready", sanitizeMeta(metadata));
+}
+
+export function trackLeadGenerationComplete(metadata?: AnalyticsPayload): void {
+  dispatch("lead_generation_complete", metadata);
+  void siteEvents.trackSiteEvent("lead_generation_complete", sanitizeMeta(metadata));
+}
+
+export function trackLeadGenerationFailed(metadata?: AnalyticsPayload): void {
+  dispatch("lead_generation_failed", metadata);
+  void siteEvents.trackSiteEvent("lead_generation_failed", sanitizeMeta(metadata));
+}
+
+export function trackResultProgressViewed(metadata?: AnalyticsPayload): void {
+  dispatch("result_progress_viewed", metadata);
+  void siteEvents.trackSiteEvent("result_progress_viewed", sanitizeMeta(metadata));
+}
+
 function sanitizeMeta(
   metadata?: AnalyticsPayload
 ): Record<string, string | number | boolean> | undefined {

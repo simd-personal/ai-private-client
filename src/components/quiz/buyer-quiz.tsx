@@ -30,7 +30,7 @@ import {
   TIMELINE_LABELS,
   TIMELINES,
 } from "@/lib/constants";
-import { getRedirectDelayMs, postLeadSubmission } from "@/lib/quiz/submit-lead";
+import { postLeadSubmission } from "@/lib/quiz/submit-lead";
 import type { BuyerQuizData } from "@/lib/schemas/quiz";
 import { tenantPathFromPathname } from "@/lib/tenants/tenant-paths";
 import { useCurrentTenant } from "@/lib/tenants/current-tenant";
@@ -224,8 +224,6 @@ export function BuyerQuiz() {
     });
     trackQuizCompleted("buyer", { leadId: result.leadId });
 
-    setLoadingState("complete");
-    await new Promise((resolve) => setTimeout(resolve, getRedirectDelayMs()));
     router.push(
       `${tenantPathFromPathname(pathname, "/result")}?token=${result.token}`
     );
@@ -248,6 +246,7 @@ export function BuyerQuiz() {
       <ReportGenerationLoading
         leadType="buyer"
         state={loadingState}
+        mode="intake"
         onTryAgain={handleTryAgain}
       />
     );

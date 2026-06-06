@@ -5,6 +5,7 @@ import {
   toPublicDecisionLayerData,
   type DataRoomItem,
 } from "@/lib/schemas/decision-layer";
+import { toPublicGenerationStatus } from "@/lib/schemas/lead-generation";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
 export async function GET(
@@ -22,7 +23,7 @@ export async function GET(
     const { data, error } = await supabase
       .from("leads")
       .select(
-        "id, lead_type, ai_report, created_at, quiz_data, ai_strategy_room, ai_scenario_comparison, ai_advisor_coordination_map, ai_relationship_map, ai_red_flags_missing_info, ai_decision_graph"
+        "id, lead_type, ai_report, created_at, quiz_data, ai_strategy_room, ai_scenario_comparison, ai_advisor_coordination_map, ai_relationship_map, ai_red_flags_missing_info, ai_decision_graph, ai_advisor_action_board, generation_status, generation_progress, base_report_status, strategy_room_status, decision_layer_status, advisor_action_board_status, presentation_status"
       )
       .eq("public_result_token", token)
       .single();
@@ -36,10 +37,15 @@ export async function GET(
       | "seller"
       | "equity"
       | "wealth_forecast";
-    const report = toPublicReport(
-      leadType,
-      data.ai_report as Record<string, unknown>
-    );
+    const generation = toPublicGenerationStatus(data);
+
+    const report =
+      data.ai_report != null
+        ? toPublicReport(
+            leadType,
+            data.ai_report as Record<string, unknown>
+          )
+        : null;
 
     const strategyRoom = toPublicStrategyRoomData(data);
 
@@ -65,6 +71,7 @@ export async function GET(
       report,
       strategyRoom,
       decisionLayer,
+      generation,
       createdAt: data.created_at,
       sellerEstimatedValueRange,
     });

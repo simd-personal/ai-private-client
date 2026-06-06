@@ -68,7 +68,10 @@ interface ReportGenerationLoadingProps {
   leadType: LeadType;
   state: LoadingState;
   onTryAgain?: () => void;
+  mode?: "intake" | "full";
 }
+
+const INTAKE_MESSAGE = "Creating your private brief workspace...";
 
 function StepIndicator({
   label,
@@ -127,33 +130,44 @@ export function ReportGenerationLoading({
   leadType,
   state,
   onTryAgain,
+  mode = "full",
 }: ReportGenerationLoadingProps) {
   const pathname = usePathname();
   const tenant = useCurrentTenant();
   const { title, steps, completeTitle } = CONTENT[leadType];
+  const intakeSteps = [INTAKE_MESSAGE];
+  const displaySteps = mode === "intake" ? intakeSteps : steps;
   const [activeStepIndex, setActiveStepIndex] = useState(0);
 
   useEffect(() => {
-    if (state !== "preparing") return;
+    if (state !== "preparing" || mode === "intake") return;
 
     const interval = setInterval(() => {
       setActiveStepIndex((prev) =>
-        prev >= steps.length - 1 ? prev : prev + 1
+        prev >= displaySteps.length - 1 ? prev : prev + 1
       );
     }, STEP_INTERVAL_MS);
 
     return () => clearInterval(interval);
-  }, [state, steps.length]);
+  }, [state, displaySteps.length, mode]);
 
   const activeStepLabel =
     state === "complete"
       ? completeTitle
       : state === "error"
         ? "Submission could not be completed"
-        : steps[activeStepIndex] ?? steps[0];
+        : mode === "intake"
+          ? INTAKE_MESSAGE
+          : displaySteps[activeStepIndex] ?? displaySteps[0];
 
   const displayTitle =
-    state === "complete" ? completeTitle : state === "error" ? title : title;
+    mode === "intake"
+      ? INTAKE_MESSAGE
+      : state === "complete"
+        ? completeTitle
+        : state === "error"
+          ? title
+          : title;
 
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-b from-beige/30 via-white to-white">
@@ -223,15 +237,17 @@ export function ReportGenerationLoading({
                 className="mt-8"
               >
                 <ul className="space-y-5" aria-label="Report preparation steps">
-                  {steps.map((step, index) => {
+                  {displaySteps.map((step, index) => {
                     const stepStatus: "pending" | "active" | "complete" =
                       state === "complete"
                         ? "complete"
-                        : index < activeStepIndex
-                          ? "complete"
-                          : index === activeStepIndex
-                            ? "active"
-                            : "pending";
+                        : mode === "intake"
+                          ? "active"
+                          : index < activeStepIndex
+                            ? "complete"
+                            : index === activeStepIndex
+                              ? "active"
+                              : "pending";
 
                     return (
                       <StepIndicator
@@ -243,7 +259,7 @@ export function ReportGenerationLoading({
                   })}
                 </ul>
 
-                {state === "preparing" && (
+                {state === "preparing" && mode !== "intake" && (
                   <motion.div
                     className="mt-8 h-1 overflow-hidden rounded-full bg-beige"
                     aria-hidden
@@ -252,7 +268,7 @@ export function ReportGenerationLoading({
                       className="h-full rounded-full bg-gradient-to-r from-champagne to-champagne-light"
                       initial={{ width: "8%" }}
                       animate={{
-                        width: `${Math.min(92, 12 + ((activeStepIndex + 1) / steps.length) * 80)}%`,
+                        width: `${Math.min(92, 12 + ((activeStepIndex + 1) / displaySteps.length) * 80)}%`,
                       }}
                       transition={{ duration: 0.6, ease: "easeOut" }}
                     />

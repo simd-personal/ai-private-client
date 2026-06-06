@@ -3,6 +3,7 @@ import { verifyAdmin } from "@/lib/admin/verify-admin";
 import { fetchTenantScopedLead } from "@/lib/admin/lead-comments";
 import { generateDocumentSummary } from "@/lib/ai/generateDocumentSummary";
 import { recordDataRoomEvent } from "@/lib/data-room/recordDataRoomEvent";
+import { markAdvisorActionBoardStale } from "@/lib/ai/persistAdvisorActionBoard";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { resolveTenantFromRequest } from "@/lib/tenants/tenant-resolver";
 import type { DataRoomItem } from "@/lib/schemas/decision-layer";
@@ -87,6 +88,12 @@ export async function POST(
         summaryTitle: summary.summaryTitle,
       },
     }).catch((err) => console.error("[data-room summarize timeline]", err));
+
+    await markAdvisorActionBoardStale(
+      supabase,
+      leadId,
+      "Document summary generated"
+    ).catch(() => undefined);
 
     return NextResponse.json({ summary, item: updated });
   } catch (error) {

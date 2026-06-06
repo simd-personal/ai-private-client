@@ -27,6 +27,18 @@ export const SITE_EVENT_NAMES = [
   "meeting_copilot_viewed",
   "meeting_note_added",
   "meeting_summary_generated",
+  "advisor_action_board_viewed",
+  "advisor_action_board_regenerated",
+  "advisor_action_item_created",
+  "advisor_action_item_updated",
+  "advisor_action_item_completed",
+  "lead_submit_started",
+  "lead_workspace_created",
+  "lead_generation_started",
+  "lead_generation_stage_ready",
+  "lead_generation_complete",
+  "lead_generation_failed",
+  "result_progress_viewed",
 ] as const;
 
 export type SiteEventName = (typeof SITE_EVENT_NAMES)[number];

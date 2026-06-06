@@ -1,4 +1,9 @@
 import { z } from "zod";
+import {
+  parseAdvisorActionBoard,
+  toPublicAdvisorActionBoard,
+} from "@/lib/schemas/advisor-action-board";
+import type { PublicAdvisorActionBoard } from "@/lib/schemas/advisor-action-board";
 
 export const DECISION_STAGES = [
   "exploration",
@@ -320,29 +325,35 @@ export function toPublicDecisionGraph(
 export interface PublicDecisionLayerData {
   decisionGraph: PublicDecisionGraph | null;
   dataRoomItems: PublicDataRoomItem[];
+  advisorActionBoard: PublicAdvisorActionBoard | null;
 }
 
 export interface AdminDecisionLayerData extends Omit<
   PublicDecisionLayerData,
-  "decisionGraph" | "dataRoomItems"
+  "decisionGraph" | "dataRoomItems" | "advisorActionBoard"
 > {
   decisionGraph: DecisionGraph | null;
   dataRoomItems: DataRoomItem[];
+  advisorActionBoard: ReturnType<typeof parseAdvisorActionBoard>;
   complianceGuardrails: ComplianceGuardrails | null;
   decisionTimelineSummary: DecisionTimelineSummary | null;
   dataRoomSuggestions: DataRoomSuggestions | null;
   decisionStage: string | null;
+  advisorActionBoardStale: boolean;
 }
 
 export function toPublicDecisionLayerData(lead: {
   ai_decision_graph?: unknown;
+  ai_advisor_action_board?: unknown;
 }, dataRoomItems: DataRoomItem[] = []): PublicDecisionLayerData {
   const graph = parseDecisionField(decisionGraphSchema, lead.ai_decision_graph);
+  const board = parseAdvisorActionBoard(lead.ai_advisor_action_board);
   return {
     decisionGraph: toPublicDecisionGraph(graph),
     dataRoomItems: dataRoomItems
       .filter((i) => i.visibility === "public")
       .map(toPublicDataRoomItem),
+    advisorActionBoard: toPublicAdvisorActionBoard(board),
   };
 }
 
@@ -352,6 +363,8 @@ export function toAdminDecisionLayerData(
     ai_compliance_guardrails?: unknown;
     ai_decision_timeline_summary?: unknown;
     ai_data_room_suggestions?: unknown;
+    ai_advisor_action_board?: unknown;
+    ai_advisor_action_board_stale?: boolean | null;
     decision_stage?: string | null;
   },
   dataRoomItems: DataRoomItem[] = []
@@ -372,6 +385,8 @@ export function toAdminDecisionLayerData(
     ),
     decisionStage: lead.decision_stage ?? null,
     dataRoomItems,
+    advisorActionBoard: parseAdvisorActionBoard(lead.ai_advisor_action_board),
+    advisorActionBoardStale: Boolean(lead.ai_advisor_action_board_stale),
   };
 }
 

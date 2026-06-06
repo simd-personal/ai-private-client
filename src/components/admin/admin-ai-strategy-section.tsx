@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AdvisorActionBoardAdmin } from "@/components/ai/AdvisorActionBoard";
 import { AdvisorBriefsPanel } from "@/components/ai/AdvisorBriefsPanel";
 import { AdvisorCoordinationMapPanel } from "@/components/ai/AdvisorCoordinationMap";
 import { ComplianceGuardrailsPanel } from "@/components/ai/ComplianceGuardrailsPanel";
@@ -31,6 +32,7 @@ import type { LeadConcierge } from "@/lib/schemas/lead-concierge";
 const TABS = [
   "Strategy Room",
   "Decision Graph",
+  "Action Board",
   "Scenarios",
   "Advisor Map",
   "Advisor Briefs",
@@ -195,11 +197,22 @@ export function AdminAiStrategySection({
         {tab === "Strategy Room" && strategyData.strategyRoom && (
           <StrategyRoomCard data={strategyData.strategyRoom} />
         )}
-        {tab === "Decision Graph" && decisionData.decisionGraph && (
+        {tab === "Decision Graph" && (
           <DecisionGraphPanel
             data={decisionData.decisionGraph}
-            admin
+            mode="admin"
             leadId={leadId}
+            primaryCoordinationNeed={
+              strategyData.strategyRoom?.primaryCoordinationNeed
+            }
+          />
+        )}
+        {tab === "Action Board" && (
+          <AdvisorActionBoardAdmin
+            leadId={leadId}
+            initialBoard={decisionData.advisorActionBoard}
+            stale={decisionData.advisorActionBoardStale}
+            onRegenerated={onRegenerated}
           />
         )}
         {tab === "Scenarios" && strategyData.scenarioComparison && (

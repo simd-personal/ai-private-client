@@ -52,11 +52,19 @@ import {
   type TenantConfig,
   withTenantQuizDataMarkers,
 } from "@/lib/tenants/tenant-config";
+import { isAsyncLeadGenerationEnabled } from "@/lib/schemas/lead-generation";
+import { processLeadSubmissionAsync } from "@/lib/leads/process-lead-async";
 
 export interface ProcessLeadResult {
   leadId: string;
   token: string;
   leadType: "buyer" | "seller" | "equity" | "wealth_forecast";
+  generationStatus?: string;
+  scheduleBackground?: boolean;
+}
+
+export interface ProcessLeadSubmissionOptions {
+  forceSync?: boolean;
 }
 
 function attributionColumns(attribution?: AttributionData) {
@@ -167,7 +175,8 @@ async function finalizeSiteAnalytics(
 
 export async function processLeadSubmission(
   request: LeadApiRequest,
-  context: ProcessLeadContext
+  context: ProcessLeadContext,
+  options?: ProcessLeadSubmissionOptions
 ): Promise<ProcessLeadResult> {
   const tenant = context.tenant;
   const supabase = getSupabaseAdmin();
@@ -177,6 +186,18 @@ export async function processLeadSubmission(
   const suppressNotifications = shouldSuppressTestNotifications(testMetadata);
   const userAgent = context.userAgent;
   void request.honeypot;
+
+  const finalizeAnalytics = async (
+    leadId: string,
+    leadType: ProcessLeadResult["leadType"]
+  ) => finalizeSiteAnalytics(leadId, leadType, request, context);
+
+  if (isAsyncLeadGenerationEnabled() && !options?.forceSync) {
+    return processLeadSubmissionAsync(request, context, {
+      token,
+      finalizeSiteAnalytics: finalizeAnalytics,
+    });
+  }
 
   const finalizeQuizData = async <T extends Record<string, unknown>>(
     base: T,

@@ -3,6 +3,10 @@ import { join } from "path";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { generateEquityReport } from "@/lib/ai/generateEquityReport";
 import { generateAndPersistStrategyRoom } from "@/lib/ai/persistStrategyRoom";
+import {
+  generateAndPersistAdvisorActionBoard,
+} from "@/lib/ai/persistAdvisorActionBoard";
+import { scheduleLeadGenerationPipeline } from "@/lib/ai/runLeadGenerationPipeline";
 import { recordIntakeDecisionVersion } from "@/lib/ai/persistDecisionLayer";
 import {
   buildMercerDemoUrls,
@@ -19,6 +23,7 @@ import { generatePublicResultToken } from "@/lib/tokens";
 import { withTenantQuizDataMarkers } from "@/lib/tenants/tenant-config";
 import { complianceGuardrailsSchema } from "@/lib/schemas/decision-layer";
 import { dealReadinessSchema } from "@/lib/schemas/ai-strategy-room";
+import { parseAdvisorActionBoard } from "@/lib/schemas/advisor-action-board";
 
 export interface MercerDemoResetResult {
   tenantSlug: string;
@@ -36,6 +41,11 @@ export interface MercerDemoResetResult {
   dataRoomItemCount: number;
   decisionStage: string | null;
   deletedLeadCount: number;
+  actionBoardLaneCount: number;
+  actionBoardBlockerCount: number;
+  actionBoardNextBestPathCount: number;
+  actionBoardActionItemCount: number;
+  actionBoardStale: boolean;
 }
 
 export function loadMercerDemoFixture(): EquityQuizData & {
@@ -58,7 +68,7 @@ export function loadMercerDemoFixture(): EquityQuizData & {
 
 export async function resetMercerNewportDemo(
   supabase: SupabaseClient,
-  options?: { siteUrl?: string; skipAi?: boolean }
+  options?: { siteUrl?: string; skipAi?: boolean; asyncGeneration?: boolean }
 ): Promise<MercerDemoResetResult> {
   const siteUrl =
     options?.siteUrl ??
@@ -173,24 +183,60 @@ export async function resetMercerNewportDemo(
   await recordIntakeDecisionVersion(supabase, leadId, tenantId);
 
   if (!options?.skipAi) {
-    try {
-      await generateAndPersistStrategyRoom(
-        supabase,
+    if (options?.asyncGeneration) {
+      scheduleLeadGenerationPipeline({
         leadId,
-        "equity",
-        fixture,
+        tenantId,
         tenant,
-        { tenantId, changeSource: "demo_reset" }
-      );
-    } catch (error) {
-      console.error("[mercer-demo] strategy room generation failed:", error);
+        mode: "background",
+      });
+    } else {
+      try {
+        await generateAndPersistStrategyRoom(
+          supabase,
+          leadId,
+          "equity",
+          fixture,
+          tenant,
+          { tenantId, changeSource: "demo_reset" }
+        );
+      } catch (error) {
+        console.error("[mercer-demo] strategy room generation failed:", error);
+      }
+
+      try {
+        await generateAndPersistAdvisorActionBoard(supabase, leadId, {
+          tenantId,
+          changeSource: "demo_reset",
+          seedActionItems: true,
+        });
+      } catch (error) {
+        console.error("[mercer-demo] action board generation failed:", error);
+      }
+
+      try {
+        await supabase
+          .from("leads")
+          .update({
+            generation_status: "complete",
+            base_report_status: "ready",
+            strategy_room_status: "ready",
+            decision_layer_status: "ready",
+            advisor_action_board_status: "ready",
+            presentation_status: "ready",
+            generation_completed_at: new Date().toISOString(),
+          })
+          .eq("id", leadId);
+      } catch {
+        // Best-effort status update after sync demo generation.
+      }
     }
   }
 
   const { data: updatedLead } = await supabase
     .from("leads")
     .select(
-      "ai_generation_source, ai_generation_model, ai_generated_at, ai_deal_readiness, ai_compliance_guardrails, decision_stage"
+      "ai_generation_source, ai_generation_model, ai_generated_at, ai_deal_readiness, ai_compliance_guardrails, decision_stage, ai_advisor_action_board, ai_advisor_action_board_stale"
     )
     .eq("id", leadId)
     .single();
@@ -200,10 +246,16 @@ export async function resetMercerNewportDemo(
     .select("*", { count: "exact", head: true })
     .eq("lead_id", leadId);
 
+  const { count: actionBoardActionItemCount } = await supabase
+    .from("advisor_action_items")
+    .select("*", { count: "exact", head: true })
+    .eq("lead_id", leadId);
+
   const readiness = dealReadinessSchema.safeParse(updatedLead?.ai_deal_readiness);
   const guardrails = complianceGuardrailsSchema.safeParse(
     updatedLead?.ai_compliance_guardrails
   );
+  const actionBoard = parseAdvisorActionBoard(updatedLead?.ai_advisor_action_board);
 
   const urls = buildMercerDemoUrls(leadId, token, siteUrl);
 
@@ -220,6 +272,11 @@ export async function resetMercerNewportDemo(
     dataRoomItemCount: dataRoomItemCount ?? 0,
     decisionStage: updatedLead?.decision_stage ?? null,
     deletedLeadCount,
+    actionBoardLaneCount: actionBoard?.lanes.length ?? 0,
+    actionBoardBlockerCount: actionBoard?.blockers.length ?? 0,
+    actionBoardNextBestPathCount: actionBoard?.nextBestPath.length ?? 0,
+    actionBoardActionItemCount: actionBoardActionItemCount ?? 0,
+    actionBoardStale: Boolean(updatedLead?.ai_advisor_action_board_stale),
   };
 }
 

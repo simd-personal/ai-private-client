@@ -37,7 +37,7 @@ import {
 } from "@/lib/quiz/money-input";
 import type { PublicEquityEstimateResponse } from "@/lib/property/equityPropertyTypes";
 import type { ValueEstimateChoice } from "@/lib/property/equityPropertyTypes";
-import { getRedirectDelayMs, postLeadSubmission } from "@/lib/quiz/submit-lead";
+import { postLeadSubmission } from "@/lib/quiz/submit-lead";
 import type { CurrentValueSource } from "@/lib/property/equityPropertyTypes";
 import type { EquityQuizData } from "@/lib/schemas/quiz";
 import { tenantPathFromPathname } from "@/lib/tenants/tenant-paths";
@@ -359,8 +359,6 @@ export function EquityQuiz() {
     });
     trackQuizCompleted("equity", { leadId: result.leadId });
 
-    setLoadingState("complete");
-    await new Promise((resolve) => setTimeout(resolve, getRedirectDelayMs()));
     router.push(
       `${tenantPathFromPathname(pathname, "/result")}?token=${result.token}`
     );
@@ -385,6 +383,7 @@ export function EquityQuiz() {
       <ReportGenerationLoading
         leadType="equity"
         state={loadingState}
+        mode="intake"
         onTryAgain={handleTryAgain}
       />
     );

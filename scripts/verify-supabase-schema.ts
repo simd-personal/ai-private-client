@@ -36,6 +36,7 @@ const REQUIRED_LEAD_COLUMNS = [
   "ai_compliance_guardrails",
   "ai_data_room_suggestions",
   "decision_stage",
+  "ai_advisor_action_board",
 ] as const;
 
 const REQUIRED_TENANT_SLUGS = ["private-client", "demo-agent"] as const;

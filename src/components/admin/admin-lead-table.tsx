@@ -98,6 +98,15 @@ export interface AdminLead {
   ai_compliance_guardrails?: unknown;
   ai_decision_timeline_summary?: unknown;
   ai_data_room_suggestions?: unknown;
+  ai_advisor_action_board?: unknown;
+  ai_advisor_action_board_stale?: boolean | null;
+  generation_status?: string | null;
+  base_report_status?: string | null;
+  strategy_room_status?: string | null;
+  decision_layer_status?: string | null;
+  advisor_action_board_status?: string | null;
+  presentation_status?: string | null;
+  generation_error?: string | null;
   decision_stage?: string | null;
   quiz_data:
     | BuyerQuizData
@@ -339,6 +348,11 @@ export function AdminLeadTable({
                   (lead.lead_status as LeadPipelineStatus) ?? "new"
                 ] ?? lead.lead_status ?? "New"}
               </Badge>
+              {lead.generation_status ? (
+                <Badge variant="outline" className="normal-case">
+                  Gen: {lead.generation_status.replace(/_/g, " ")}
+                </Badge>
+              ) : null}
               {lead.next_follow_up_at ? (
                 <span className="text-xs text-gray-500">
                   Follow up:{" "}
@@ -372,6 +386,38 @@ export function AdminLeadTable({
               {new Date(lead.created_at).toLocaleDateString()}
             </div>
           </div>
+
+          {(lead.generation_status ||
+            lead.base_report_status ||
+            lead.strategy_room_status) && (
+            <div className="mb-4 rounded-xl border border-gray-100 bg-beige/20 p-4 text-sm">
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                <p className="font-medium text-navy">Generation status</p>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={updating === lead.id}
+                  onClick={() =>
+                    void adminFetch(`/api/leads/${lead.id}/generation/retry`, {
+                      method: "POST",
+                    }).then(() => onRefresh())
+                  }
+                >
+                  Retry generation
+                </Button>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                <span>Report: {lead.base_report_status ?? "—"}</span>
+                <span>Strategy room: {lead.strategy_room_status ?? "—"}</span>
+                <span>Decision layer: {lead.decision_layer_status ?? "—"}</span>
+                <span>Action board: {lead.advisor_action_board_status ?? "—"}</span>
+                <span>Presentation: {lead.presentation_status ?? "—"}</span>
+              </div>
+              {lead.generation_error ? (
+                <p className="mt-2 text-xs text-red-600">{lead.generation_error}</p>
+              ) : null}
+            </div>
+          )}
 
           {getEquityDetails(lead) && (
             <p className="mb-4 text-sm text-gray-600">{getEquityDetails(lead)}</p>

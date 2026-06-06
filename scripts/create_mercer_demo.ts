@@ -24,8 +24,13 @@ async function main() {
 
   console.log("\n── Mercer Newport Demo Reset ──\n");
 
+  const asyncGeneration = process.argv.includes("--async");
+  if (asyncGeneration) {
+    console.log("Mode: async generation (pipeline runs in background)\n");
+  }
+
   const supabase = getSupabaseAdmin();
-  const result = await resetMercerNewportDemo(supabase);
+  const result = await resetMercerNewportDemo(supabase, { asyncGeneration });
 
   console.log(`Tenant:           ${result.tenantSlug}`);
   console.log(`Lead ID:          ${result.leadId}`);
@@ -34,6 +39,11 @@ async function main() {
   console.log(`Guardrails:       ${result.guardrailsStatus ?? "—"}`);
   console.log(`Data room items:  ${result.dataRoomItemCount}`);
   console.log(`Decision stage:   ${result.decisionStage ?? "—"}`);
+  console.log(`Action board lanes: ${result.actionBoardLaneCount}`);
+  console.log(`Action board blockers: ${result.actionBoardBlockerCount}`);
+  console.log(`Next best path steps: ${result.actionBoardNextBestPathCount}`);
+  console.log(`Action items:     ${result.actionBoardActionItemCount}`);
+  console.log(`Board stale:      ${result.actionBoardStale ? "yes" : "no"}`);
   console.log(`AI source:        ${result.aiGenerationSource ?? "—"}`);
   console.log(`AI model:         ${result.aiGenerationModel ?? "—"}`);
   console.log(`Public result:    ${result.publicResultUrl}`);

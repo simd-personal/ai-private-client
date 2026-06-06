@@ -39,7 +39,7 @@ import {
   formatMoneyInput,
   parseMoney,
 } from "@/lib/quiz/money-input";
-import { getRedirectDelayMs, postLeadSubmission } from "@/lib/quiz/submit-lead";
+import { postLeadSubmission } from "@/lib/quiz/submit-lead";
 import type { WealthQuizData } from "@/lib/schemas/quiz";
 import { tenantPathFromPathname } from "@/lib/tenants/tenant-paths";
 
@@ -287,8 +287,6 @@ export function WealthForecastQuiz() {
     });
     trackQuizCompleted("wealth_forecast", { leadId: result.leadId });
 
-    setLoadingState("complete");
-    await new Promise((resolve) => setTimeout(resolve, getRedirectDelayMs()));
     router.push(
       `${tenantPathFromPathname(pathname, "/result")}?token=${result.token}`
     );
@@ -306,6 +304,7 @@ export function WealthForecastQuiz() {
       <ReportGenerationLoading
         leadType="wealth_forecast"
         state={loadingState}
+        mode="intake"
         onTryAgain={handleTryAgain}
       />
     );

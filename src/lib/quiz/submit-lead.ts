@@ -18,10 +18,16 @@ export type LeadSubmitFailure = {
 
 export type LeadSubmitResult = LeadSubmitSuccess | LeadSubmitFailure;
 
-const REDIRECT_DELAY_MS = 750;
+const REDIRECT_DELAY_MS = 0;
 
 export function getRedirectDelayMs(): number {
   return REDIRECT_DELAY_MS;
+}
+
+export function getIntakeLoadingMessage(elapsedMs: number): string {
+  return elapsedMs >= 2000
+    ? "Creating your private brief workspace..."
+    : "Saving your intake...";
 }
 
 export async function postLeadSubmission(

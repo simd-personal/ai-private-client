@@ -1,5 +1,7 @@
+import { after } from "next/server";
 import { NextResponse } from "next/server";
 import { hashAnalyticsIp } from "@/lib/analytics/server";
+import { scheduleLeadGenerationPipeline } from "@/lib/ai/runLeadGenerationPipeline";
 import { processLeadSubmission } from "@/lib/leads/process-submission";
 import {
   isHoneypotTriggered,
@@ -10,9 +12,16 @@ import {
   resolveTenantBySlug,
   resolveTenantFromRequest,
 } from "@/lib/tenants/tenant-resolver";
+import { buildTenantResultUrl } from "@/lib/tenants/tenant-paths";
+import {
+  trackLeadSubmitStarted,
+  trackLeadWorkspaceCreated,
+} from "@/lib/analytics";
 
 export async function POST(request: Request) {
   try {
+    trackLeadSubmitStarted();
+
     const ip = getClientIp(request);
     if (isRateLimited(ip, "leads")) {
       return NextResponse.json(
@@ -46,6 +55,7 @@ export async function POST(request: Request) {
       ? await resolveTenantBySlug(parsed.data.tenantSlug)
       : await resolveTenantFromRequest(request);
     const userAgent = request.headers.get("user-agent");
+
     const result = await processLeadSubmission(parsed.data, {
       userAgent,
       ipHash: hashAnalyticsIp(ip),
@@ -53,10 +63,38 @@ export async function POST(request: Request) {
       tenant: resolvedTenant.tenant,
     });
 
+    const siteUrl =
+      process.env.NEXT_PUBLIC_SITE_URL?.trim() ?? new URL(request.url).origin;
+    const resultUrl = buildTenantResultUrl(
+      resolvedTenant.tenant.slug,
+      result.token,
+      siteUrl
+    );
+
+    if (result.scheduleBackground) {
+      after(() => {
+        scheduleLeadGenerationPipeline({
+          leadId: result.leadId,
+          tenantId: resolvedTenant.tenantId,
+          tenant: resolvedTenant.tenant,
+          mode: "background",
+        });
+      });
+    }
+
+    trackLeadWorkspaceCreated({
+      lead_id: result.leadId,
+      lead_type: result.leadType,
+      async: result.scheduleBackground ? 1 : 0,
+    });
+
     return NextResponse.json({
+      success: true,
       leadId: result.leadId,
       token: result.token,
       leadType: result.leadType,
+      resultUrl,
+      generationStatus: result.generationStatus ?? "complete",
     });
   } catch (error) {
     console.error("Lead API error:", error);

@@ -61,6 +61,18 @@ const FORBIDDEN_KEYS = [
   "sessionJourney",
   "lead_events",
   "lead_comments",
+  "adminOnlyNote",
+  "adminSummary",
+  "staleReason",
+  "ai_advisor_action_board",
+  "ai_advisor_action_board_stale",
+  "advisor_action_items",
+  "relatedDataRoomItemId",
+  "itemId",
+  "owner_name",
+  "admin_notes",
+  "generation_error",
+  "generation_progress",
 ] as const;
 
 const REQUIRED_PUBLIC_SECTIONS = [
@@ -123,7 +135,7 @@ async function buildPublicPayload(token: string) {
   const { data, error } = await supabase
     .from("leads")
     .select(
-      "id, lead_type, ai_report, created_at, quiz_data, ai_strategy_room, ai_scenario_comparison, ai_advisor_coordination_map, ai_relationship_map, ai_red_flags_missing_info, ai_decision_graph"
+      "id, lead_type, ai_report, created_at, quiz_data, ai_strategy_room, ai_scenario_comparison, ai_advisor_coordination_map, ai_relationship_map, ai_red_flags_missing_info, ai_decision_graph, ai_advisor_action_board"
     )
     .eq("public_result_token", token)
     .single();

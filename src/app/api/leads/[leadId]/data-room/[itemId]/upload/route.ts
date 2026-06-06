@@ -3,6 +3,7 @@ import { verifyAdmin } from "@/lib/admin/verify-admin";
 import { fetchTenantScopedLead } from "@/lib/admin/lead-comments";
 import { sanitizeFilename } from "@/lib/data-room/sanitizeFilename";
 import { recordDataRoomEvent } from "@/lib/data-room/recordDataRoomEvent";
+import { markAdvisorActionBoardStale } from "@/lib/ai/persistAdvisorActionBoard";
 import {
   DATA_ROOM_ALLOWED_MIME_TYPES,
   DATA_ROOM_BUCKET,
@@ -148,6 +149,12 @@ export async function POST(
         file_name: item.file_name,
       },
     }).catch((err) => console.error("[data-room upload timeline]", err));
+
+    await markAdvisorActionBoardStale(
+      supabase,
+      leadId,
+      isReplace ? "Data room file replaced" : "Data room file uploaded"
+    ).catch(() => undefined);
 
     return NextResponse.json({
       success: true,

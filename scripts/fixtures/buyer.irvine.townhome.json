@@ -1,0 +1,23 @@
+{
+  "leadType": "buyer",
+  "desiredLocations": ["Irvine"],
+  "budgetRange": "1500000 to 2500000",
+  "propertyType": "townhome",
+  "lifestylePriorities": [
+    "walkability",
+    "new construction",
+    "commute",
+    "investment upside"
+  ],
+  "timeline": "3 to 6 months",
+  "financingStatus": "talking to lender",
+  "freeText": "I want something modern, low maintenance, and close to restaurants. I am not sure which Irvine areas make the most sense.",
+  "contact": {
+    "firstName": "Fixture",
+    "lastName": "IrvineBuyer",
+    "email": "fixture-irvine-buyer@astoria.local",
+    "phone": "9495551001",
+    "preferredContactMethod": "email",
+    "consentGiven": true
+  }
+}

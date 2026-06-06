@@ -1,0 +1,32 @@
+{
+  "leadType": "equity",
+  "propertyAddress": {
+    "street": "18 Swimmers Point",
+    "city": "Newport Beach",
+    "state": "CA",
+    "zip": "92657"
+  },
+  "currentHomeCity": "Newport Beach",
+  "currentHomeState": "California",
+  "yearPurchased": 2018,
+  "originalPurchasePrice": 4200000,
+  "estimatedCurrentValue": 8500000,
+  "currentValueSource": "user_adjusted",
+  "valueEstimateChoice": "adjust",
+  "mortgageBalance": 2100000,
+  "estimatedImprovements": 450000,
+  "filingStatus": "married_or_joint",
+  "nextMoveGoal": "upsize",
+  "desiredNextLocation": "Newport Beach",
+  "timeline": "3 to 6 months",
+  "biggestConcern": "timing sale and purchase",
+  "freeText": "Considering a larger coastal property but need clarity on net proceeds and sequencing before listing.",
+  "contact": {
+    "firstName": "Fixture",
+    "lastName": "SwimmersEquity",
+    "email": "fixture-swimmers-equity@astoria.local",
+    "phone": "9495552010",
+    "preferredContactMethod": "email",
+    "consentGiven": true
+  }
+}

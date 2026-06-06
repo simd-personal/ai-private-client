@@ -1,0 +1,23 @@
+{
+  "leadType": "buyer",
+  "desiredLocations": ["Newport Beach", "Laguna Beach"],
+  "budgetRange": "5000000 to 10000000",
+  "propertyType": "estate",
+  "lifestylePriorities": [
+    "ocean access",
+    "privacy",
+    "views",
+    "architecture"
+  ],
+  "timeline": "30 to 90 days",
+  "financingStatus": "cash buyer",
+  "freeText": "I want a private coastal property with strong design and long term resale strength.",
+  "contact": {
+    "firstName": "Fixture",
+    "lastName": "NewportBuyer",
+    "email": "fixture-newport-buyer@astoria.local",
+    "phone": "9495551002",
+    "preferredContactMethod": "phone",
+    "consentGiven": true
+  }
+}

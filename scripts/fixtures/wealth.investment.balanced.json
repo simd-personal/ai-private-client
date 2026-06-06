@@ -1,0 +1,26 @@
+{
+  "leadType": "wealth_forecast",
+  "purchasePrice": 2200000,
+  "downPaymentType": "amount",
+  "downPaymentAmount": 660000,
+  "propertyUse": "investment_property",
+  "targetLocations": ["Irvine", "Costa Mesa"],
+  "holdPeriodYears": 10,
+  "propertyTaxRate": 1.1,
+  "insuranceAnnual": 4800,
+  "maintenanceRate": 1,
+  "liquiditySituation": "reallocating_investments",
+  "leveragePreference": "balanced_leverage",
+  "riskProfile": "balanced",
+  "monthlyCarryComfort": "10k_20k",
+  "timeline": "6_to_12_months",
+  "freeText": "Comparing investment hold scenarios before reallocating from public equities.",
+  "contact": {
+    "firstName": "Fixture",
+    "lastName": "InvestmentBalanced",
+    "email": "fixture-wealth-investment@astoria.local",
+    "phone": "7145554102",
+    "preferredContactMethod": "phone",
+    "consentGiven": true
+  }
+}

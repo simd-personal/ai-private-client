@@ -1,0 +1,32 @@
+{
+  "leadType": "equity",
+  "propertyAddress": {
+    "street": "1845 Harbor Point Dr",
+    "city": "Costa Mesa",
+    "state": "CA",
+    "zip": "92627"
+  },
+  "currentHomeCity": "Costa Mesa",
+  "currentValueSource": "user_provided",
+  "valueEstimateChoice": "adjust",
+  "currentHomeState": "California",
+  "yearPurchased": 2012,
+  "originalPurchasePrice": 720000,
+  "estimatedCurrentValue": 1450000,
+  "mortgageBalance": 310000,
+  "estimatedImprovements": 65000,
+  "filingStatus": "single",
+  "nextMoveGoal": "relocate within California",
+  "desiredNextLocation": "Laguna Beach",
+  "timeline": "6 to 12 months",
+  "biggestConcern": "capital gains taxes",
+  "freeText": "Considering selling to relocate closer to the coast. Want to understand net proceeds before committing.",
+  "contact": {
+    "firstName": "Fixture",
+    "lastName": "CostaMesaEquity",
+    "email": "fixture-costa-equity@astoria.local",
+    "phone": "9495552002",
+    "preferredContactMethod": "phone",
+    "consentGiven": true
+  }
+}

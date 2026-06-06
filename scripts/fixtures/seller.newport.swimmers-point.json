@@ -1,0 +1,35 @@
+{
+  "leadType": "seller",
+  "propertyAddress": {
+    "street": "18 Swimmers Point",
+    "city": "Newport Beach",
+    "state": "CA",
+    "zip": "92657"
+  },
+  "estimatedValueRange": "10000000 plus",
+  "propertyCondition": "updated",
+  "sellingTimeline": "3 to 6 months",
+  "sellerPriority": "privacy",
+  "propertyType": "single family",
+  "bedrooms": 5,
+  "bathrooms": 11,
+  "squareFeet": 11500,
+  "lotSize": 20756,
+  "yearBuilt": 2025,
+  "viewType": "unknown_confirm_with_justin",
+  "waterProximity": "unknown_confirm_with_justin",
+  "gatedOrPrivateAccess": "unknown",
+  "poolSpa": "unknown",
+  "architectDesigner": "unknown_confirm_with_justin",
+  "photoPrivacyPreference": "limited_distribution",
+  "showingPrivacyPreference": "qualified_private_showings",
+  "freeText": "Seller wants a privacy-first strategy and wants to understand whether private market testing makes sense before any public launch.",
+  "contact": {
+    "firstName": "Test",
+    "lastName": "Swimmers Point Seller",
+    "email": "test+swimmers@example.com",
+    "phone": "5555555555",
+    "preferredContactMethod": "email",
+    "consentGiven": true
+  }
+}

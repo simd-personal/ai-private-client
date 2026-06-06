@@ -1,0 +1,35 @@
+{
+  "leadType": "seller",
+  "propertyAddress": {
+    "street": "12 Pacific Crest",
+    "city": "Irvine",
+    "state": "CA",
+    "zip": "92603"
+  },
+  "estimatedValueRange": "2500000 to 5000000",
+  "propertyCondition": "luxury renovated",
+  "sellingTimeline": "3 to 6 months",
+  "sellerPriority": "highest price",
+  "bedrooms": 5,
+  "bathrooms": 5.5,
+  "squareFeet": 4200,
+  "lotSize": 9800,
+  "yearBuilt": 2018,
+  "propertyType": "estate",
+  "hoaStatus": "yes",
+  "poolStatus": "yes",
+  "garageSpaces": 3,
+  "notableFeatures": "Corner lot, golf course adjacency, indoor-outdoor living, smart home",
+  "recentUpgrades": "Whole-home automation 2024, primary bath remodel, outdoor kitchen",
+  "buyerObjectionConcerns": "Buyers may compare to newer inventory in Eastwood; HOA fees need clear framing",
+  "upgrades": "Whole-home automation 2024, primary bath remodel, outdoor kitchen",
+  "freeText": "Prefer private outreach before MLS. Open to pricing conversation after prep plan.",
+  "contact": {
+    "firstName": "Fixture",
+    "lastName": "IrvineSeller",
+    "email": "fixture-irvine-seller@astoria.local",
+    "phone": "9495552100",
+    "preferredContactMethod": "email",
+    "consentGiven": true
+  }
+}

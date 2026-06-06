@@ -1,0 +1,33 @@
+{
+  "leadType": "equity",
+  "propertyAddress": {
+    "street": "42 Meadowbrook",
+    "city": "Irvine",
+    "state": "CA",
+    "zip": "92603"
+  },
+  "currentHomeCity": "Irvine",
+  "currentValueSource": "user_provided",
+  "valueEstimateChoice": "adjust",
+  "currentHomeState": "California",
+  "yearPurchased": 2014,
+  "originalPurchasePrice": 850000,
+  "estimatedCurrentValue": 1650000,
+  "mortgageBalance": 420000,
+  "estimatedInterestRate": 3.25,
+  "estimatedImprovements": 95000,
+  "filingStatus": "married_or_joint",
+  "nextMoveGoal": "upsize",
+  "desiredNextLocation": "Newport Beach",
+  "timeline": "3 to 6 months",
+  "biggestConcern": "timing sale and purchase",
+  "freeText": "We want more space near the coast but are unsure how much equity we can actually use after selling costs and taxes.",
+  "contact": {
+    "firstName": "Fixture",
+    "lastName": "IrvineEquity",
+    "email": "fixture-irvine-equity@astoria.local",
+    "phone": "9495552001",
+    "preferredContactMethod": "email",
+    "consentGiven": true
+  }
+}

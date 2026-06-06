@@ -1,0 +1,28 @@
+{
+  "leadType": "wealth_forecast",
+  "purchasePrice": 4500000,
+  "downPaymentType": "percent",
+  "downPaymentPercent": 25,
+  "propertyUse": "primary_residence",
+  "targetLocations": ["Newport Beach", "Laguna Beach"],
+  "holdPeriodYears": 7,
+  "interestRate": 6.5,
+  "propertyTaxRate": 1.1,
+  "insuranceAnnual": 12000,
+  "hoaMonthly": 450,
+  "maintenanceRate": 1,
+  "liquiditySituation": "recent_exit",
+  "leveragePreference": "balanced_leverage",
+  "riskProfile": "upside_oriented",
+  "monthlyCarryComfort": "20k_40k",
+  "timeline": "3_to_6_months",
+  "freeText": "Founder liquidity from a recent exit. Want to model a coastal primary with room to preserve cash for the next venture.",
+  "contact": {
+    "firstName": "Fixture",
+    "lastName": "NewportFounder",
+    "email": "fixture-wealth-newport@astoria.local",
+    "phone": "9495553101",
+    "preferredContactMethod": "email",
+    "consentGiven": true
+  }
+}

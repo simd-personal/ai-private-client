@@ -1,0 +1,23 @@
+{
+  "leadType": "seller",
+  "propertyAddress": {
+    "street": "1845 Harbor Point Dr",
+    "city": "Costa Mesa",
+    "state": "CA",
+    "zip": "92627"
+  },
+  "estimatedValueRange": "1500000 to 2500000",
+  "propertyCondition": "updated",
+  "sellingTimeline": "3 to 6 months",
+  "sellerPriority": "highest price",
+  "upgrades": "kitchen remodel, new flooring, updated landscaping",
+  "freeText": "I may sell if the number makes sense, but I do not want to publicly list too early.",
+  "contact": {
+    "firstName": "Fixture",
+    "lastName": "CostaMesaSeller",
+    "email": "fixture-costa-seller@astoria.local",
+    "phone": "9495552001",
+    "preferredContactMethod": "email",
+    "consentGiven": true
+  }
+}

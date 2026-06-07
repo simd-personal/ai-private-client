@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { maybeRecoverStaleLeadGeneration } from "@/lib/ai/generation-recovery";
+import { maybeKickstartLeadGeneration, maybeRecoverStaleLeadGeneration } from "@/lib/ai/generation-recovery";
 import { scheduleLeadGenerationPipeline } from "@/lib/ai/runLeadGenerationPipeline";
 import { toPublicGenerationStatus } from "@/lib/schemas/lead-generation";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
@@ -25,7 +25,15 @@ export async function GET(
     }
 
     if (data.id) {
-      await maybeRecoverStaleLeadGeneration(supabase, data, async ({ leadId, tenantId, phase }) => {
+      const scheduleGeneration = async ({
+        leadId,
+        tenantId,
+        phase,
+      }: {
+        leadId: string;
+        tenantId: string | null;
+        phase: "base" | "extended";
+      }) => {
         const { tenantId: resolvedTenantId, tenant } =
           await resolveTenantById(tenantId);
         scheduleLeadGenerationPipeline({
@@ -34,7 +42,10 @@ export async function GET(
           tenant,
           phase,
         });
-      });
+      };
+
+      await maybeKickstartLeadGeneration(supabase, data, scheduleGeneration);
+      await maybeRecoverStaleLeadGeneration(supabase, data, scheduleGeneration);
     }
 
     return NextResponse.json(toPublicGenerationStatus(data));

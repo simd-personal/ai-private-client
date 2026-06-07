@@ -15,6 +15,7 @@ type LeadGenerationRow = {
   generation_status?: string | null;
   generation_started_at?: string | null;
   generation_progress?: unknown;
+  public_result_ready_at?: string | null;
   base_report_status?: string | null;
   strategy_room_status?: string | null;
   decision_layer_status?: string | null;
@@ -154,6 +155,51 @@ export function isGenerationComplete(lead: LeadGenerationRow): boolean {
       lead.advisor_action_board_status === "ready" &&
       lead.presentation_status === "ready")
   );
+}
+
+export function shouldKickstartGeneration(lead: LeadGenerationRow): boolean {
+  if (!lead.public_result_ready_at && !lead.id) return false;
+  if (lead.generation_started_at) return false;
+  if (lead.generation_status !== "intake_received") return false;
+  if (lead.base_report_status !== "pending") return false;
+  if (lead.ai_report != null) return false;
+
+  const startedAt = lead.public_result_ready_at
+    ? Date.parse(lead.public_result_ready_at)
+    : NaN;
+  if (!Number.isFinite(startedAt)) return false;
+
+  const progress = parseProgress(lead.generation_progress);
+  const recoveryAt = progress.recoveryAttemptAt
+    ? Date.parse(progress.recoveryAttemptAt)
+    : NaN;
+  if (
+    Number.isFinite(recoveryAt) &&
+    Date.now() - recoveryAt < RECOVERY_COOLDOWN_MS
+  ) {
+    return false;
+  }
+
+  return Date.now() - startedAt >= 15 * 1000;
+}
+
+export async function maybeKickstartLeadGeneration(
+  supabase: SupabaseClient,
+  lead: LeadGenerationRow,
+  schedule: (input: {
+    leadId: string;
+    tenantId: string | null;
+    phase: "base" | "extended";
+  }) => Promise<void>
+): Promise<void> {
+  if (!lead.id || !shouldKickstartGeneration(lead)) return;
+
+  await markGenerationRecoveryAttempt(supabase, lead.id, lead);
+  await schedule({
+    leadId: lead.id,
+    tenantId: lead.tenant_id ?? null,
+    phase: "base",
+  });
 }
 
 export async function maybeRecoverStaleLeadGeneration(

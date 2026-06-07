@@ -55,6 +55,7 @@ function stepStatus(
   }
 
   if (status.isFastBriefReady && stepKey === "strategy_room") {
+    if (status.generationStatus === "intake_received") return "pending";
     return status.strategyRoomStatus === "pending" ? "active" : "pending";
   }
 

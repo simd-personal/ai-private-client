@@ -8,13 +8,21 @@ function workerSecret(): string | undefined {
   );
 }
 
+function vercelBypassSecret(): string | undefined {
+  return (
+    process.env.VERCEL_AUTOMATION_BYPASS_SECRET?.trim() ||
+    process.env.E2E_VERCEL_BYPASS_SECRET?.trim() ||
+    undefined
+  );
+}
+
 function siteOrigin(): string {
   const explicit = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (process.env.VERCEL === "1") {
+    const vercel = process.env.VERCEL_URL?.trim();
+    if (vercel) return `https://${vercel.replace(/\/$/, "")}`;
+  }
   if (explicit) return explicit.replace(/\/$/, "");
-
-  const vercel = process.env.VERCEL_URL?.trim();
-  if (vercel) return `https://${vercel.replace(/\/$/, "")}`;
-
   return "http://localhost:3000";
 }
 
@@ -23,40 +31,57 @@ function shouldUseHttpWorker(): boolean {
   return process.env.VERCEL === "1";
 }
 
+async function runPipelineInline(
+  input: RunLeadGenerationPipelineInput,
+  reason: string
+): Promise<void> {
+  console.warn(`[generation-scheduler] running inline: ${reason}`);
+  const { runLeadGenerationPipeline } = await import(
+    "@/lib/ai/runLeadGenerationPipeline"
+  );
+  await runLeadGenerationPipeline(input);
+}
+
 export async function triggerLeadGenerationWorker(
   input: RunLeadGenerationPipelineInput
 ): Promise<void> {
   if (!shouldUseHttpWorker()) {
-    const { runLeadGenerationPipeline } = await import(
-      "@/lib/ai/runLeadGenerationPipeline"
-    );
-    await runLeadGenerationPipeline(input);
+    await runPipelineInline(input, "local dev");
     return;
   }
 
   const secret = workerSecret();
   if (!secret) {
-    console.error(
-      "[generation-scheduler] INTERNAL_GENERATION_SECRET is required on Vercel"
-    );
+    await runPipelineInline(input, "INTERNAL_GENERATION_SECRET missing");
     return;
   }
 
-  const response = await fetch(`${siteOrigin()}/api/internal/lead-generation`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${secret}`,
-    },
-    body: JSON.stringify(input),
-    cache: "no-store",
-  });
+  const bypass = vercelBypassSecret();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${secret}`,
+  };
+  if (bypass) {
+    headers["x-vercel-protection-bypass"] = bypass;
+  }
 
-  if (!response.ok) {
-    const body = await response.text().catch(() => "");
-    throw new Error(
-      `Generation worker failed (${response.status}): ${body.slice(0, 200)}`
-    );
+  try {
+    const response = await fetch(`${siteOrigin()}/api/internal/lead-generation`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(input),
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      const body = await response.text().catch(() => "");
+      throw new Error(
+        `Generation worker failed (${response.status}): ${body.slice(0, 200)}`
+      );
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "worker fetch failed";
+    await runPipelineInline(input, message);
   }
 }
 

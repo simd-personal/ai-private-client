@@ -35,7 +35,8 @@
     "test:e2e:install": "playwright install chromium",
     "check": "npm run lint && npm run build",
     "check:demo": "npm run supabase:verify && npm run demo:mercer && npm run verify:public-safety -- mercer-newport-demo",
-    "check:ai": "npm run ai:test -- private-client.demo"
+    "check:ai": "npm run ai:test -- private-client.demo",
+    "test:async-generation": "tsx scripts/test-async-generation.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

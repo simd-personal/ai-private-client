@@ -930,3 +930,10 @@ alter table public.leads
   add column if not exists fast_public_brief jsonb,
   add column if not exists fast_public_brief_generated_at timestamptz,
   add column if not exists public_result_ready_at timestamptz;
+
+
+-- ========== 020_async_ai_report_nullable.sql ==========
+-- Async lead generation inserts the row before ai_report is generated.
+
+alter table public.leads
+  alter column ai_report drop not null;

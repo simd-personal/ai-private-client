@@ -35,6 +35,7 @@ export const generationProgressSchema = z.object({
   failedStages: z.array(z.string()).optional(),
   percent: z.number().optional(),
   lastUpdatedAt: z.string().optional(),
+  recoveryAttemptAt: z.string().optional(),
 });
 
 export type GenerationProgress = z.infer<typeof generationProgressSchema>;

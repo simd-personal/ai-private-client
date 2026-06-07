@@ -61,6 +61,11 @@ import {
 import {
   timeGenerationStage,
 } from "@/lib/ai/generation-timing";
+import {
+  inferGenerationPhase,
+  resetStaleRunningStages,
+} from "@/lib/ai/generation-recovery";
+import { scheduleLeadGenerationWorker } from "@/lib/ai/generation-scheduler";
 
 type PipelineQuizData =
   | BuyerQuizData
@@ -73,11 +78,14 @@ type PipelineQuizData =
       calculations?: ReturnType<typeof calculateWealthForecast>;
     });
 
+export type GenerationPipelinePhase = "base" | "extended" | "full";
+
 export interface RunLeadGenerationPipelineInput {
   leadId: string;
   tenantId: string | null;
   tenant: TenantConfig;
   mode?: "background" | "sync";
+  phase?: GenerationPipelinePhase;
 }
 
 async function attachLeadConcierge<T extends Record<string, unknown>>(
@@ -169,13 +177,38 @@ export async function runLeadGenerationPipeline(
     return;
   }
 
-  await markLeadGenerationStarted(supabase, leadId);
-  trackLeadGenerationStarted({ lead_id: leadId });
+  await resetStaleRunningStages(supabase, leadId, lead);
+
+  const phase = input.phase ?? inferGenerationPhase(lead);
+
+  if (phase === "extended") {
+    if (lead.ai_report == null || lead.base_report_status !== "ready") {
+      scheduleLeadGenerationWorker({ ...input, phase: "base" });
+      return;
+    }
+  }
+
+  if (
+    (phase === "base" || phase === "full") &&
+    (!lead.generation_started_at || lead.generation_status === "intake_received")
+  ) {
+    await markLeadGenerationStarted(supabase, leadId);
+    trackLeadGenerationStarted({ lead_id: leadId });
+  }
 
   const leadType = lead.lead_type as LeadType;
   let quizData = lead.quiz_data as PipelineQuizData;
+  let reportSource: "openai" | "fallback" = "fallback";
+  let leadScore = lead.lead_score ?? 0;
+  let leadTemperature = (lead.lead_temperature ?? "cold") as
+    | "cold"
+    | "warm"
+    | "hot";
+  let internalLeadSummary = lead.internal_lead_summary ?? "";
+  let suggestedFollowUp = lead.suggested_follow_up_message ?? "";
 
   try {
+    if (phase === "base" || phase === "full") {
     if (leadType === "seller") {
       const sellerQuiz = quizData as SellerQuizDataWithIntelligence;
       if (!sellerQuiz.propertyIntelligence) {
@@ -249,14 +282,6 @@ export async function runLeadGenerationPipeline(
 
     await updateLeadGenerationStage(supabase, leadId, "base_report", "running");
 
-    let reportSource: "openai" | "fallback" = "fallback";
-    let leadScore = lead.lead_score ?? 0;
-    let leadTemperature = (lead.lead_temperature ?? "cold") as
-      | "cold"
-      | "warm"
-      | "hot";
-    let internalLeadSummary = lead.internal_lead_summary ?? "";
-    let suggestedFollowUp = lead.suggested_follow_up_message ?? "";
     let publicReport: Record<string, unknown>;
 
     try {
@@ -344,6 +369,42 @@ export async function runLeadGenerationPipeline(
         lead_id: leadId,
         stage: "base_report",
       });
+    }
+
+      if (phase === "base") {
+        const { data: refreshed } = await supabase
+          .from("leads")
+          .select("base_report_status, ai_report")
+          .eq("id", leadId)
+          .single();
+
+        if (
+          refreshed?.base_report_status === "ready" &&
+          refreshed.ai_report != null
+        ) {
+          scheduleLeadGenerationWorker({ ...input, phase: "extended" });
+        }
+        return;
+      }
+    }
+
+    if (phase === "extended" || phase === "full") {
+    const { data: latestLead } = await supabase
+      .from("leads")
+      .select("*")
+      .eq("id", leadId)
+      .single();
+
+    if (latestLead) {
+      quizData = latestLead.quiz_data as PipelineQuizData;
+      leadScore = latestLead.lead_score ?? leadScore;
+      leadTemperature = (latestLead.lead_temperature ?? leadTemperature) as
+        | "cold"
+        | "warm"
+        | "hot";
+      internalLeadSummary = latestLead.internal_lead_summary ?? internalLeadSummary;
+      suggestedFollowUp =
+        latestLead.suggested_follow_up_message ?? suggestedFollowUp;
     }
 
     await updateLeadGenerationStage(supabase, leadId, "strategy_room", "running");
@@ -584,6 +645,7 @@ export async function runLeadGenerationPipeline(
 
     await markLeadGenerationComplete(supabase, leadId);
     trackLeadGenerationComplete({ lead_id: leadId });
+    }
   } catch (fatalError) {
     console.error("[generation-pipeline] fatal:", fatalError);
     await markLeadGenerationFailed(
@@ -599,11 +661,8 @@ export async function runLeadGenerationPipeline(
 export function scheduleLeadGenerationPipeline(
   input: RunLeadGenerationPipelineInput
 ): void {
-  /**
-   * Fire-and-forget for local/demo and serverless after-response scheduling.
-   * Production can later move this to Supabase Edge Functions, a queue, or Inngest.
-   */
-  void runLeadGenerationPipeline(input).catch((error) => {
-    console.error("[generation-pipeline] background error:", error);
+  scheduleLeadGenerationWorker({
+    ...input,
+    phase: input.phase ?? "base",
   });
 }

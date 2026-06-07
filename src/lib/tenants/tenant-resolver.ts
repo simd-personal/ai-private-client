@@ -160,6 +160,15 @@ export async function resolveDefaultTenant(): Promise<ResolvedTenant> {
   return { tenantId: row.id, tenant: toTenantConfig(row) };
 }
 
+export async function resolveTenantById(
+  tenantId?: string | null
+): Promise<ResolvedTenant> {
+  if (!tenantId) return resolveDefaultTenant();
+  const row = await fetchTenantRowById(tenantId);
+  if (!row) return resolveDefaultTenant();
+  return { tenantId: row.id, tenant: toTenantConfig(row) };
+}
+
 export async function findTenantBySlug(
   slug?: string | null
 ): Promise<ResolvedTenant | null> {

@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "src/app/api/internal/lead-generation/route.ts": {
+      "maxDuration": 300
+    }
+  }
+}

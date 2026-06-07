@@ -7,13 +7,14 @@ export const LEAD_PUBLIC_RESULT_SELECT_BASE =
 export const LEAD_PUBLIC_RESULT_SELECT_EXTENDED = `${LEAD_PUBLIC_RESULT_SELECT_BASE}, generation_status, generation_progress, base_report_status, strategy_room_status, decision_layer_status, advisor_action_board_status, presentation_status, fast_public_brief, fast_public_brief_generated_at, public_result_ready_at`;
 
 export const LEAD_STATUS_SELECT_BASE =
-  "generation_status, generation_progress, base_report_status, strategy_room_status, decision_layer_status, advisor_action_board_status, presentation_status, ai_report, ai_strategy_room, ai_scenario_comparison, ai_advisor_coordination_map, ai_decision_graph, ai_advisor_action_board";
+  "id, tenant_id, generation_status, generation_progress, generation_started_at, base_report_status, strategy_room_status, decision_layer_status, advisor_action_board_status, presentation_status, ai_report, ai_strategy_room, ai_scenario_comparison, ai_advisor_coordination_map, ai_decision_graph, ai_advisor_action_board";
 
 export const LEAD_STATUS_SELECT_EXTENDED = `${LEAD_STATUS_SELECT_BASE}, public_result_ready_at, fast_public_brief`;
 
 /** Public result row; extended columns optional when migrations 018/019 are not applied. */
 export type LeadPublicResultRow = {
   id: string;
+  tenant_id?: string | null;
   lead_type: string;
   first_name: string | null;
   last_name: string | null;
@@ -29,6 +30,7 @@ export type LeadPublicResultRow = {
   ai_advisor_action_board: unknown;
   generation_status?: string | null;
   generation_progress?: unknown;
+  generation_started_at?: string | null;
   base_report_status?: string | null;
   strategy_room_status?: string | null;
   decision_layer_status?: string | null;
@@ -41,8 +43,11 @@ export type LeadPublicResultRow = {
 
 export type LeadPublicStatusRow = Pick<
   LeadPublicResultRow,
+  | "id"
+  | "tenant_id"
   | "generation_status"
   | "generation_progress"
+  | "generation_started_at"
   | "base_report_status"
   | "strategy_room_status"
   | "decision_layer_status"

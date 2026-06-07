@@ -54,6 +54,7 @@ export async function POST(
         tenantId: resolvedTenant.tenantId,
         tenant: resolvedTenant.tenant,
         mode: "sync",
+        phase: "full",
       });
     }
 

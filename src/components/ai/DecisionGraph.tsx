@@ -101,7 +101,7 @@ export function DecisionGraphPanel({
             />
           ) : null}
 
-          <div className="hidden lg:grid lg:grid-cols-4 lg:gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
             <DecisionMapColumn
               title="Known Facts"
               subtitle="Confirmed context for planning"
@@ -122,33 +122,6 @@ export function DecisionGraphPanel({
               nodes={columns.advisorReview}
               isAdmin={isAdmin}
               showConnector
-            />
-            <DecisionMapColumn
-              title="Next Actions"
-              subtitle="Suggested coordination steps"
-              nodes={columns.nextActions}
-              isAdmin={isAdmin}
-            />
-          </div>
-
-          <div className="grid gap-4 lg:hidden">
-            <DecisionMapColumn
-              title="Known Facts"
-              subtitle="Confirmed context for planning"
-              nodes={columns.knownFacts}
-              isAdmin={isAdmin}
-            />
-            <DecisionMapColumn
-              title="Items to Verify"
-              subtitle="Information still to confirm"
-              nodes={columns.itemsToVerify}
-              isAdmin={isAdmin}
-            />
-            <DecisionMapColumn
-              title="Advisor Review"
-              subtitle="Specialist coordination topics"
-              nodes={columns.advisorReview}
-              isAdmin={isAdmin}
             />
             <DecisionMapColumn
               title="Next Actions"
@@ -320,7 +293,7 @@ function DecisionMapColumn({
   showConnector?: boolean;
 }) {
   return (
-    <div className="relative flex min-h-[280px] flex-col">
+    <div className="relative flex flex-col">
       {showConnector ? (
         <div
           aria-hidden
@@ -403,53 +376,30 @@ function ExecutiveNextBestPathFlow({
 }) {
   return (
     <ReportCard title="Next Best Path">
-      <div className="hidden items-stretch gap-2 lg:flex">
-        {steps.map((step, index) => (
-          <div key={step.stepNumber} className="flex min-w-0 flex-1 items-stretch">
-            <div className="flex min-w-0 flex-1 flex-col rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-              <span className="text-xs font-medium uppercase tracking-wide text-champagne">
-                Step {step.stepNumber}
-              </span>
-              <p className="mt-1 font-medium leading-snug text-navy">{step.title}</p>
-              <p className="mt-2 flex-1 text-sm leading-relaxed text-gray-600">
-                {displayText(step.clientSafeSummary)}
-              </p>
-              {isAdmin ? (
-                <p className="mt-2 text-xs text-gray-400">Owner: {step.owner}</p>
-              ) : null}
-              {isAdmin && "adminSummary" in step && step.adminSummary ? (
-                <p className="mt-2 border-t border-gray-50 pt-2 text-xs text-gray-400">
-                  {step.adminSummary}
-                </p>
-              ) : null}
-            </div>
-            {index < steps.length - 1 ? (
-              <div className="flex shrink-0 items-center px-1 text-champagne">
-                <span aria-hidden className="text-lg">
-                  →
-                </span>
-              </div>
-            ) : null}
-          </div>
-        ))}
-      </div>
-
-      <ol className="space-y-3 lg:hidden">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {steps.map((step) => (
-          <li
+          <div
             key={step.stepNumber}
-            className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm"
+            className="flex min-w-0 flex-col rounded-xl border border-gray-100 bg-white p-4 shadow-sm"
           >
             <span className="text-xs font-medium uppercase tracking-wide text-champagne">
               Step {step.stepNumber}
             </span>
-            <p className="mt-1 font-medium text-navy">{step.title}</p>
-            <p className="mt-2 text-sm leading-relaxed text-gray-600">
+            <p className="mt-1 font-medium leading-snug text-navy">{step.title}</p>
+            <p className="mt-2 flex-1 text-sm leading-relaxed text-gray-600">
               {displayText(step.clientSafeSummary)}
             </p>
-          </li>
+            {isAdmin ? (
+              <p className="mt-2 text-xs text-gray-400">Owner: {step.owner}</p>
+            ) : null}
+            {isAdmin && "adminSummary" in step && step.adminSummary ? (
+              <p className="mt-2 border-t border-gray-50 pt-2 text-xs text-gray-400">
+                {step.adminSummary}
+              </p>
+            ) : null}
+          </div>
         ))}
-      </ol>
+      </div>
     </ReportCard>
   );
 }

@@ -646,11 +646,23 @@ function ResultByToken({ token }: { token: string }) {
     return <ReportNotFound />;
   }
 
+  const activelyGenerating =
+    generationStatus?.generationStatus === "generating" ||
+    (generationStatus?.generationStatus === "intake_received" &&
+      !generationStatus.publicSectionsReady.report);
+
+  const generationFinished =
+    generationStatus?.isReady ||
+    generationStatus?.generationStatus === "complete" ||
+    generationStatus?.generationStatus === "partially_ready" ||
+    (Boolean(data.report) &&
+      Boolean(generationStatus?.publicSectionsReady.strategyRoom));
+
   const showProgress =
     generationStatus &&
-    !generationStatus.isReady &&
-    generationStatus.generationStatus !== "complete" &&
-    !progressDismissed;
+    activelyGenerating &&
+    !progressDismissed &&
+    !generationFinished;
 
   const hasReport = data.report != null;
   const hasFastBrief = Boolean(data.isFastBrief && data.fastBrief);
@@ -670,7 +682,7 @@ function ResultByToken({ token }: { token: string }) {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="mx-auto max-w-2xl px-6 py-12"
+      className="mx-auto max-w-6xl px-6 py-12"
       data-testid="public-result-page"
     >
       {showProgress && generationStatus ? (
@@ -682,59 +694,68 @@ function ResultByToken({ token }: { token: string }) {
         />
       ) : null}
 
-      <div className="mb-8">
+      <header className="mb-10 max-w-3xl">
         <p className="mb-2 text-xs tracking-[0.2em] text-champagne uppercase">
           {hasFastBrief && !hasReport ? "Initial Private Brief" : "Your Private Plan"}
         </p>
         <h1 className="font-serif text-3xl text-navy md:text-4xl">{pageTitle}</h1>
         {hasFastBrief && !hasReport ? (
-          <p className="mt-3 text-sm text-gray-600">
+          <p className="mt-3 text-sm leading-relaxed text-gray-600">
             Your private decision workspace is ready. Deeper advisor coordination
             sections will appear below as they become available.
           </p>
         ) : !hasReport ? (
-          <p className="mt-3 text-sm text-gray-600">
+          <p className="mt-3 text-sm leading-relaxed text-gray-600">
             Your base report is still being prepared. Additional sections will
             appear below as they become ready.
           </p>
-        ) : null}
+        ) : (
+          <p className="mt-3 text-sm leading-relaxed text-gray-600">
+            A private planning brief prepared for advisor review. Use the sections
+            below to explore scenarios, coordination paths, and next steps.
+          </p>
+        )}
+      </header>
+
+      {(hasReport || hasFastBrief) && (
+        <section className="mb-12 max-w-3xl space-y-6">
+          {hasReport ? (
+            data.leadType === "buyer" ? (
+              <BuyerReportView report={data.report as PublicBuyerReport} />
+            ) : data.leadType === "seller" ? (
+              <SellerReportView
+                report={data.report as PublicSellerReport}
+                estimatedValueRange={data.sellerEstimatedValueRange}
+              />
+            ) : data.leadType === "equity" ? (
+              <EquityReportView report={data.report as PublicEquityMoveReport} />
+            ) : (
+              <WealthForecastReportView
+                report={data.report as PublicWealthForecastReport}
+              />
+            )
+          ) : hasFastBrief && data.fastBrief ? (
+            <FastBriefSection brief={data.fastBrief} />
+          ) : null}
+        </section>
+      )}
+
+      <PublicStrategyRoomSections
+        data={data.strategyRoom ?? null}
+        decisionLayer={data.decisionLayer ?? null}
+        hasBaseReport={hasReport}
+        recommendedNextStep={
+          hasReport
+            ? (data.report as { recommendedNextStep?: string }).recommendedNextStep
+            : data.fastBrief?.recommendedNextStep
+        }
+      />
+
+      <div className="mt-10 max-w-3xl">
+        <AiDisclaimer />
       </div>
 
-      <div className="mb-8 space-y-6">
-        {hasReport ? (
-          data.leadType === "buyer" ? (
-            <BuyerReportView report={data.report as PublicBuyerReport} />
-          ) : data.leadType === "seller" ? (
-            <SellerReportView
-              report={data.report as PublicSellerReport}
-              estimatedValueRange={data.sellerEstimatedValueRange}
-            />
-          ) : data.leadType === "equity" ? (
-            <EquityReportView report={data.report as PublicEquityMoveReport} />
-          ) : (
-            <WealthForecastReportView
-              report={data.report as PublicWealthForecastReport}
-            />
-          )
-        ) : hasFastBrief && data.fastBrief ? (
-          <FastBriefSection brief={data.fastBrief} />
-        ) : null}
-
-        <PublicStrategyRoomSections
-          data={data.strategyRoom ?? null}
-          decisionLayer={data.decisionLayer ?? null}
-          recommendedNextStep={
-            hasReport
-              ? (data.report as { recommendedNextStep?: string })
-                  .recommendedNextStep
-              : data.fastBrief?.recommendedNextStep
-          }
-        />
-      </div>
-
-      <AiDisclaimer />
-
-      <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+      <div className="mt-8 flex max-w-3xl flex-col gap-3 sm:flex-row">
         <div className="flex-1">
           <BookingCta location="result_page" fullWidth />
         </div>

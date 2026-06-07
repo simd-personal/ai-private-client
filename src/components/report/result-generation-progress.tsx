@@ -34,8 +34,20 @@ function stepStatus(
     return "pending";
   }
 
+  if (stepKey === "strategy_room") {
+    if (status.strategyRoomStatus === "ready") return "complete";
+    if (status.strategyRoomStatus === "failed") return "failed";
+    if (status.strategyRoomStatus === "running") return "active";
+    if (
+      status.generationStatus === "generating" &&
+      status.baseReportStatus === "ready"
+    ) {
+      return "active";
+    }
+    return "pending";
+  }
+
   const stageMap: Record<string, PublicGenerationStatus["baseReportStatus"]> = {
-    strategy_room: status.strategyRoomStatus,
     decision_layer: status.decisionLayerStatus,
     advisor_action_board: status.advisorActionBoardStatus,
     presentation: status.presentationStatus,
@@ -44,19 +56,8 @@ function stepStatus(
   const stageStatusValue = stageMap[stepKey];
   if (stageStatusValue === "failed" || failed.has(stepKey)) return "failed";
   if (stageStatusValue === "ready" || completed.has(stepKey)) return "complete";
-  if (
-    stageStatusValue === "running" ||
-    progress.currentStage === stepKey ||
-    status.currentPublicStageLabel.toLowerCase().includes(
-      stepKey.replace(/_/g, " ")
-    )
-  ) {
+  if (stageStatusValue === "running" || progress.currentStage === stepKey) {
     return "active";
-  }
-
-  if (status.isFastBriefReady && stepKey === "strategy_room") {
-    if (status.generationStatus === "intake_received") return "pending";
-    return status.strategyRoomStatus === "pending" ? "active" : "pending";
   }
 
   return "pending";

@@ -9,12 +9,14 @@ export function ScenarioComparisonPanel({ data }: ScenarioComparisonProps) {
   return (
     <div data-testid="scenario-comparison-section">
       <ReportCard title="Scenario Comparison">
-      <p className="mb-6 text-sm text-gray-500">{data.overallScenarioNote}</p>
-      <div className="grid gap-4 lg:grid-cols-3">
+      <p className="mb-6 text-sm leading-relaxed text-gray-500">
+        {data.overallScenarioNote}
+      </p>
+      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
         {data.scenarios.map((scenario) => (
           <div
             key={scenario.id}
-            className="flex flex-col rounded-xl border border-gray-100 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
+            className="flex min-h-full flex-col rounded-xl border border-gray-100 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
           >
             <h4 className="font-serif text-lg text-navy">{scenario.title}</h4>
             <p className="mt-2 text-sm leading-relaxed text-gray-600">

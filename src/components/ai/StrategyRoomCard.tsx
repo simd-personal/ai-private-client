@@ -4,6 +4,7 @@ import type { StrategyRoom } from "@/lib/schemas/ai-strategy-room";
 
 interface StrategyRoomCardProps {
   data: StrategyRoom;
+  compact?: boolean;
 }
 
 const COMPLEXITY_LABELS: Record<StrategyRoom["complexityLevel"], string> = {
@@ -13,7 +14,7 @@ const COMPLEXITY_LABELS: Record<StrategyRoom["complexityLevel"], string> = {
   very_high: "Very High Complexity",
 };
 
-export function StrategyRoomCard({ data }: StrategyRoomCardProps) {
+export function StrategyRoomCard({ data, compact = false }: StrategyRoomCardProps) {
   return (
     <ReportCard title="Private Strategy Room">
       <div className="space-y-6">
@@ -21,26 +22,32 @@ export function StrategyRoomCard({ data }: StrategyRoomCardProps) {
           <Badge variant="champagne" className="mb-3">
             {COMPLEXITY_LABELS[data.complexityLevel]}
           </Badge>
-          <p className="leading-relaxed text-gray-700">{data.situationSnapshot}</p>
+          {!compact ? (
+            <p className="leading-relaxed text-gray-700">{data.situationSnapshot}</p>
+          ) : null}
         </div>
 
-        <div>
-          <h4 className="mb-2 font-medium text-navy">Known Facts</h4>
-          <ul className="list-disc space-y-1.5 pl-5 text-sm text-gray-600">
-            {data.knownFacts.map((fact) => (
-              <li key={fact}>{fact}</li>
-            ))}
-          </ul>
-        </div>
+        {!compact ? (
+          <>
+            <div>
+              <h4 className="mb-2 font-medium text-navy">Known Facts</h4>
+              <ul className="list-disc space-y-1.5 pl-5 text-sm text-gray-600">
+                {data.knownFacts.map((fact) => (
+                  <li key={fact}>{fact}</li>
+                ))}
+              </ul>
+            </div>
 
-        <div>
-          <h4 className="mb-2 font-medium text-navy">Items to Verify</h4>
-          <ul className="list-disc space-y-1.5 pl-5 text-sm text-gray-600">
-            {data.itemsToVerify.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        </div>
+            <div>
+              <h4 className="mb-2 font-medium text-navy">Items to Verify</h4>
+              <ul className="list-disc space-y-1.5 pl-5 text-sm text-gray-600">
+                {data.itemsToVerify.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          </>
+        ) : null}
 
         <div>
           <h4 className="mb-2 font-medium text-navy">Key Decision Drivers</h4>

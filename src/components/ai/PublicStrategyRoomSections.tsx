@@ -25,6 +25,23 @@ interface PublicStrategyRoomSectionsProps {
   decisionLayer?: PublicDecisionLayerData | null;
   recommendedNextStep?: string;
   loading?: boolean;
+  hasBaseReport?: boolean;
+}
+
+function SectionDivider({ title, description }: { title: string; description?: string }) {
+  return (
+    <div className="border-t border-gray-100 pt-10">
+      <p className="text-xs font-medium uppercase tracking-[0.2em] text-champagne">
+        Advisor Coordination
+      </p>
+      <h2 className="mt-1 font-serif text-2xl text-navy md:text-3xl">{title}</h2>
+      {description ? (
+        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-gray-600">
+          {description}
+        </p>
+      ) : null}
+    </div>
+  );
 }
 
 export function PublicStrategyRoomSections({
@@ -32,6 +49,7 @@ export function PublicStrategyRoomSections({
   decisionLayer,
   recommendedNextStep,
   loading,
+  hasBaseReport = false,
 }: PublicStrategyRoomSectionsProps) {
   const strategyRef = useRef<HTMLDivElement>(null);
   const scenarioRef = useRef<HTMLDivElement>(null);
@@ -61,7 +79,7 @@ export function PublicStrategyRoomSections({
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-8">
         <StrategyRoomSkeleton />
       </div>
     );
@@ -70,28 +88,35 @@ export function PublicStrategyRoomSections({
   if (!data?.strategyRoom) return null;
 
   return (
-    <div className="space-y-6">
-      <ReportCard title="Executive Summary">
-        <p className="leading-relaxed text-gray-700">
-          {data.strategyRoom.situationSnapshot}
-        </p>
-      </ReportCard>
+    <div className="space-y-8">
+      <SectionDivider
+        title="Strategy & Decision Workspace"
+        description="Scenario paths, advisor coordination, and decision planning for your advisory team to review."
+      />
+
+      {!hasBaseReport ? (
+        <ReportCard title="Executive Summary">
+          <p className="leading-relaxed text-gray-700">
+            {data.strategyRoom.situationSnapshot}
+          </p>
+        </ReportCard>
+      ) : null}
 
       <div ref={strategyRef} data-testid="strategy-room-section">
-        <StrategyRoomCard data={data.strategyRoom} />
+        <StrategyRoomCard data={data.strategyRoom} compact={hasBaseReport} />
       </div>
 
-      {data.scenarioComparison && (
+      {data.scenarioComparison ? (
         <div ref={scenarioRef}>
           <ScenarioComparisonPanel data={data.scenarioComparison} />
         </div>
-      )}
+      ) : null}
 
-      {data.advisorCoordinationMap && (
+      {data.advisorCoordinationMap ? (
         <div ref={advisorRef}>
           <AdvisorCoordinationMapPanel data={data.advisorCoordinationMap} />
         </div>
-      )}
+      ) : null}
 
       {decisionLayer?.decisionGraph ? (
         <DecisionGraphPanel
@@ -103,26 +128,23 @@ export function PublicStrategyRoomSections({
         <DecisionGraphPanel data={null} mode="public" />
       )}
 
-      {decisionLayer?.advisorActionBoard && (
+      {decisionLayer?.advisorActionBoard ? (
         <AdvisorActionBoardPublic board={decisionLayer.advisorActionBoard} />
-      )}
+      ) : null}
 
-      {decisionLayer && decisionLayer.dataRoomItems.length > 0 && (
-        <DataRoomChecklist
-          leadId=""
-          publicItems={decisionLayer.dataRoomItems}
-        />
-      )}
+      {decisionLayer && decisionLayer.dataRoomItems.length > 0 ? (
+        <DataRoomChecklist leadId="" publicItems={decisionLayer.dataRoomItems} />
+      ) : null}
 
-      {data.itemsToClarify && (
+      {data.itemsToClarify ? (
         <MissingInfoPanel data={data.itemsToClarify} title="Items to Clarify" />
-      )}
+      ) : null}
 
-      {recommendedNextStep && (
+      {!hasBaseReport && recommendedNextStep ? (
         <ReportCard title="Recommended Next Step">
           <p className="leading-relaxed text-gray-700">{recommendedNextStep}</p>
         </ReportCard>
-      )}
+      ) : null}
     </div>
   );
 }
